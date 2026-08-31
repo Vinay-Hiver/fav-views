@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import ProfileModal from '../ProfileModal';
 
 // SVG Icons from local assets
 import analyticsIcon from '../assets/icons/analytics.svg';
@@ -13,7 +12,7 @@ import customersIcon from '../assets/icons/customers.svg';
 import templatesIcon from '../assets/icons/templates.svg';
 import settingsIcon from '../assets/icons/settings.svg';
 
-const MiniSidebar = ({ showProfileModal, setShowProfileModal }) => {
+const MiniSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -64,10 +63,9 @@ const MiniSidebar = ({ showProfileModal, setShowProfileModal }) => {
          <div className="mini-item">
            <img src={chatSupportIcon} alt="Support" width="16" height="16" />
          </div>
-         <div className="avatar-container" onClick={() => setShowProfileModal(!showProfileModal)}>
+         <div className="avatar-container">
            <div className="avatar">A</div>
            <div className="status-indicator online"></div>
-           {showProfileModal && <ProfileModal onClose={() => setShowProfileModal(false)} />}
          </div>
       </div>
     </div>

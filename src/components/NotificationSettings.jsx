@@ -1,6 +1,17 @@
-import React, { useState } from 'react';
-import { Mail, MessageSquare, Hash, MessageCircle, Phone, Volume2, Play, RefreshCw, Info } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Mail, MessageSquare, Hash, MessageCircle, Phone, Volume2, Info, CheckCheck, Check, ChevronDown } from 'lucide-react';
+import { PlayCircle } from '@untitledui/icons';
 import './NotificationSettings.css';
+
+import barkTone from '../tones/bark.mp3';
+import blingTone from '../tones/bling.mp3';
+import chimeTone from '../tones/chime.mp3';
+import dropletTone from '../tones/droplet.mp3';
+import hornTone from '../tones/horn.mp3';
+import meowTone from '../tones/meow.mp3';
+import notificationTone from '../tones/notification.mp3';
+import ringTone from '../tones/ring.mp3';
+import twinkleTone from '../tones/twinkle.mp3';
 
 // Channels — order matters
 const CHANNELS = [
@@ -54,8 +65,19 @@ const SPECIFIC = {
   ],
 };
 
-const TONES = ['Chime', 'Ping', 'Knock', 'Pop', 'Ring', 'Soft'];
-const DEFAULT_TONE = { email: 'Chime', chat: 'Ping', slack: 'Knock', whatsapp: 'Pop', voice: 'Ring' };
+const TONES = [
+  { id: 'chime', name: 'Chime', file: chimeTone },
+  { id: 'bling', name: 'Bling', file: blingTone },
+  { id: 'ring', name: 'Ring', file: ringTone },
+  { id: 'notification', name: 'Notification', file: notificationTone },
+  { id: 'droplet', name: 'Droplet', file: dropletTone },
+  { id: 'twinkle', name: 'Twinkle', file: twinkleTone },
+  { id: 'horn', name: 'Horn', file: hornTone },
+  { id: 'bark', name: 'Bark', file: barkTone },
+  { id: 'meow', name: 'Meow', file: meowTone },
+];
+const TONE_MAP = Object.fromEntries(TONES.map((t) => [t.id, t]));
+const DEFAULT_TONE = { email: 'chime', chat: 'notification', slack: 'bling', whatsapp: 'droplet', voice: 'ring' };
 const DEFAULT_ON_ACTIVITIES = ['assigned', 'mention', 'sla_first', 'sla_res'];
 
 function buildInitialState() {
@@ -78,28 +100,53 @@ function buildInitialSound() {
   return sound;
 }
 
-const NotificationSettings = () => {
-  const [layout, setLayout] = useState('channel'); // 'channel' | 'activity'
+const NotificationSettings = ({ layout, setLayout }) => {
   const [soundMaster, setSoundMaster] = useState(true);
   const [sound, setSound] = useState(buildInitialSound);
+  const [bulkTone, setBulkTone] = useState(DEFAULT_TONE.email);
   const [state, setState] = useState(buildInitialState);
   const [activeTab, setActiveTab] = useState('email');
-  const [playingTone, setPlayingTone] = useState(null);
+  const [playingToneId, setPlayingToneId] = useState(null);
+  const audioRef = useRef(null);
 
   const toggleChannelSound = (channelId) => {
     setSound((prev) => ({ ...prev, [channelId]: { ...prev[channelId], on: !prev[channelId].on } }));
   };
 
-  const cycleTone = (channelId) => {
+  const setChannelTone = (channelId, toneId) => {
+    setSound((prev) => ({ ...prev, [channelId]: { ...prev[channelId], tone: toneId } }));
+  };
+
+  const applyBulkTone = (toneId) => {
+    setBulkTone(toneId);
     setSound((prev) => {
-      const i = TONES.indexOf(prev[channelId].tone);
-      return { ...prev, [channelId]: { ...prev[channelId], tone: TONES[(i + 1) % TONES.length] } };
+      const updated = {};
+      CHANNELS.forEach((c) => {
+        updated[c.id] = { ...prev[c.id], tone: toneId };
+      });
+      return updated;
     });
   };
 
-  const previewTone = (channelId) => {
-    setPlayingTone(channelId);
-    setTimeout(() => setPlayingTone((cur) => (cur === channelId ? null : cur)), 600);
+  const previewTone = (toneId) => {
+    const tone = TONE_MAP[toneId];
+    if (!tone) return;
+    if (audioRef.current) audioRef.current.pause();
+    const audio = new Audio(tone.file);
+    audioRef.current = audio;
+    setPlayingToneId(toneId);
+    audio.addEventListener('ended', () => setPlayingToneId((cur) => (cur === toneId ? null : cur)));
+    audio.play().catch(() => setPlayingToneId((cur) => (cur === toneId ? null : cur)));
+  };
+
+  const setActivityForAllChannels = (activityId, value) => {
+    setState((prev) => {
+      const updated = {};
+      CHANNELS.forEach((c) => {
+        updated[c.id] = { ...prev[c.id], [activityId]: value };
+      });
+      return updated;
+    });
   };
 
   const toggleActivity = (channelId, activityId) => {
@@ -139,6 +186,15 @@ const NotificationSettings = () => {
         {soundMaster && (
           <div className="sound-body">
             <div className="sound-sub">Pick which channels play a sound and choose a tone for each.</div>
+            <div className="sound-bulk-row">
+              <span className="sound-bulk-label">Use one tone everywhere</span>
+              <ToneDropdown
+                value={bulkTone}
+                onChange={applyBulkTone}
+                playingToneId={playingToneId}
+                onPreview={previewTone}
+              />
+            </div>
             {CHANNELS.map((c) => {
               const s = sound[c.id];
               return (
@@ -148,18 +204,13 @@ const NotificationSettings = () => {
                     {c.name}
                   </span>
                   <span className={`tone-controls ${s.on ? '' : 'disabled'}`}>
-                    <button
-                      className={`tone-play ${playingTone === c.id ? 'playing' : ''}`}
-                      onClick={() => previewTone(c.id)}
+                    <ToneDropdown
+                      value={s.tone}
+                      onChange={(toneId) => setChannelTone(c.id, toneId)}
                       disabled={!s.on}
-                      aria-label={`Preview ${c.name} tone`}
-                    >
-                      <Play size={11} fill="currentColor" />
-                    </button>
-                    <button className="tone-btn" onClick={() => cycleTone(c.id)} disabled={!s.on}>
-                      {s.tone}
-                      <RefreshCw size={11} />
-                    </button>
+                      playingToneId={playingToneId}
+                      onPreview={previewTone}
+                    />
                   </span>
                   <button
                     className={`hs-switch ${s.on ? 'on' : ''}`}
@@ -183,24 +234,6 @@ const NotificationSettings = () => {
             <h2>Notifications</h2>
             <p>Choose what notifies you, per activity and per channel.</p>
           </div>
-          <div className="layout-switcher" role="tablist" aria-label="Notification layout">
-            <button
-              className={layout === 'channel' ? 'active' : ''}
-              onClick={() => setLayout('channel')}
-              role="tab"
-              aria-selected={layout === 'channel'}
-            >
-              By channel
-            </button>
-            <button
-              className={layout === 'activity' ? 'active' : ''}
-              onClick={() => setLayout('activity')}
-              role="tab"
-              aria-selected={layout === 'activity'}
-            >
-              By activity
-            </button>
-          </div>
         </div>
 
         {layout === 'channel' ? (
@@ -212,12 +245,83 @@ const NotificationSettings = () => {
             toggleActivity={toggleActivity}
           />
         ) : (
-          <ActivityFirst state={state} toggleActivity={toggleActivity} />
+          <ActivityFirst
+            state={state}
+            toggleActivity={toggleActivity}
+            setActivityForAllChannels={setActivityForAllChannels}
+          />
         )}
       </div>
     </div>
   );
 };
+
+function ToneDropdown({ value, onChange, disabled, playingToneId, onPreview }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  const selected = TONE_MAP[value];
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const handleOutside = (e) => {
+      if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [open]);
+
+  return (
+    <div className="tone-dropdown" ref={rootRef}>
+      <button
+        type="button"
+        className="tone-dropdown-trigger"
+        onClick={() => setOpen((o) => !o)}
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        {selected ? selected.name : 'Select tone'}
+        <ChevronDown size={13} />
+      </button>
+
+      {open && (
+        <div className="tone-dropdown-menu" role="listbox">
+          {TONES.map((tone) => (
+            <div
+              className={`tone-option ${value === tone.id ? 'selected' : ''}`}
+              role="option"
+              aria-selected={value === tone.id}
+              key={tone.id}
+            >
+              <button
+                type="button"
+                className={`tone-option-play ${playingToneId === tone.id ? 'playing' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPreview(tone.id);
+                }}
+                aria-label={`Preview ${tone.name}`}
+              >
+                <PlayCircle width={18} height={18} />
+              </button>
+              <button
+                type="button"
+                className="tone-option-label"
+                onClick={() => {
+                  onChange(tone.id);
+                  setOpen(false);
+                }}
+              >
+                {tone.name}
+              </button>
+              {value === tone.id && <Check size={14} className="tone-option-check" />}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ChannelFirst({ activeTab, setActiveTab, activeChannel, state, toggleActivity }) {
   const specificItems = SPECIFIC[activeTab] || [];
@@ -295,7 +399,7 @@ function ActivityRow({ label, enabled, onToggle, onlyHere }) {
   );
 }
 
-function ActivityFirst({ state, toggleActivity }) {
+function ActivityFirst({ state, toggleActivity, setActivityForAllChannels }) {
   // Trailing bucket for channel-specific activities, each only applicable to its own channel
   const specificRows = CHANNELS.flatMap((c) => (SPECIFIC[c.id] || []).map((item) => ({ ...item, ownerId: c.id })));
 
@@ -319,16 +423,31 @@ function ActivityFirst({ state, toggleActivity }) {
           {BUCKETS.map((bucket) => (
             <React.Fragment key={bucket.name}>
               <tr className="bucket-row"><td colSpan={CHANNELS.length + 1}>{bucket.name}</td></tr>
-              {bucket.items.map((item) => (
-                <tr className="item-row" key={item.id}>
-                  <td><span className="n-type">{item.label}</span></td>
-                  {CHANNELS.map((c) => (
-                    <td className="c" key={c.id}>
-                      <Checkbox checked={state[c.id][item.id]} onChange={() => toggleActivity(c.id, item.id)} />
+              {bucket.items.map((item) => {
+                const allOn = CHANNELS.every((c) => state[c.id][item.id]);
+                return (
+                  <tr className="item-row" key={item.id}>
+                    <td>
+                      <span className="n-type-row">
+                        <span className="n-type">{item.label}</span>
+                        <button
+                          type="button"
+                          className="row-all-toggle"
+                          onClick={() => setActivityForAllChannels(item.id, !allOn)}
+                        >
+                          <CheckCheck size={12} />
+                          {allOn ? 'Turn off for all' : 'Turn on for all'}
+                        </button>
+                      </span>
                     </td>
-                  ))}
-                </tr>
-              ))}
+                    {CHANNELS.map((c) => (
+                      <td className="c" key={c.id}>
+                        <Checkbox checked={state[c.id][item.id]} onChange={() => toggleActivity(c.id, item.id)} />
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
             </React.Fragment>
           ))}
 
