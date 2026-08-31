@@ -15,7 +15,7 @@ import smallReplyIcon from '../assets/icons/small-reply.svg';
 import smallForwardIcon from '../assets/icons/small-forward.svg';
 import chevronDownIcon from '../assets/icons/s-chevron-down.svg';
 
-const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSignatureId }) => {
+const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSignatureId, activeRole, setActiveRole }) => {
   const [expandedIds, setExpandedIds] = useState([]);
   const [activeReplyId, setActiveReplyId] = useState(null);
 
@@ -56,6 +56,24 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
           <button className="icon-btn">
              <img src={titleAi} alt="AI" width="16" height="16" />
           </button>
+        </div>
+        <div className="header-right">
+          <div className="role-switch">
+            <button
+              type="button"
+              className={`role-switch-option ${activeRole === 'Admin' ? 'active' : ''}`}
+              onClick={() => setActiveRole('Admin')}
+            >
+              Admin
+            </button>
+            <button
+              type="button"
+              className={`role-switch-option ${activeRole === 'Agent' ? 'active' : ''}`}
+              onClick={() => setActiveRole('Agent')}
+            >
+              Agent
+            </button>
+          </div>
         </div>
       </div>
 

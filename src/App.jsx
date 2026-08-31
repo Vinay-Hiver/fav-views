@@ -1088,6 +1088,10 @@ function App() {
   const [signatures, setSignatures] = useState([]);
   const [defaultSignatureId, setDefaultSignatureId] = useState(null);
 
+  // Prototype-only flow switch — Admin vs Agent. Shared between the detail
+  // header toggle and the All Views kebab menu (Admin sees an extra option).
+  const [activeRole, setActiveRole] = useState('Admin');
+
   const selectedConversation = conversationsData.find(c => c.id === selectedId)
     || filteredConversations.find(c => c.id === selectedId);
 
@@ -1096,21 +1100,24 @@ function App() {
       <Routes>
         <Route path="/" element={
           <>
-            <Sidebar 
+            <Sidebar
               activeFilter={activeFilter}
               onFilterChange={setActiveFilter}
+              activeRole={activeRole}
             />
-            <ConversationList 
-              conversations={filteredConversations} 
-              selectedId={selectedId} 
-              onSelect={setSelectedId} 
+            <ConversationList
+              conversations={filteredConversations}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
               activeFilter={activeFilter}
             />
-            <ConversationDetail 
-              conversation={selectedConversation} 
+            <ConversationDetail
+              conversation={selectedConversation}
               signatures={signatures}
               setSignatures={setSignatures}
               defaultSignatureId={defaultSignatureId}
+              activeRole={activeRole}
+              setActiveRole={setActiveRole}
             />
             <RightPanel />
           </>

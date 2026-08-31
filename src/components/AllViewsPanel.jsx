@@ -1,6 +1,10 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { MAX_FAVOURITES } from '../data/dummyViews';
-import { BackIcon, SearchIcon, StarIcon, DragHandleIcon, ViewTypeIcon } from './viewIcons';
+import {
+  BackIcon, SearchIcon, StarIcon, DragHandleIcon, ViewTypeIcon, KebabIcon,
+  UsersStarIcon, PencilIcon, SlidersIcon, TrashIcon, HeartCircleIcon,
+} from './viewIcons';
 
 // 1x1 transparent image used to suppress the browser's native drag ghost.
 const EMPTY_DRAG_IMAGE = typeof Image !== 'undefined' ? new Image() : null;
@@ -11,13 +15,29 @@ if (EMPTY_DRAG_IMAGE) {
 // `viewsData` = { views: [...], favouriteIds: [...] } for the current inbox.
 // This component is fully controlled — all favourite/reorder changes are
 // reported up via onChange so the home nav (favourite views) stays in sync.
-const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsData, onChange }) => {
+const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsData, onChange, activeRole }) => {
   const [search, setSearch] = React.useState('');
   const [capMessage, setCapMessage] = React.useState(false);
   const [draggedId, setDraggedId] = React.useState(null);
+  const [menuOpenFor, setMenuOpenFor] = React.useState(null);
+  const [menuPosition, setMenuPosition] = React.useState({ top: 0, left: 0 });
 
   const views = viewsData?.views || [];
   const favouriteIds = viewsData?.favouriteIds || [];
+  const teamFavouriteIds = viewsData?.teamFavouriteIds || [];
+
+  // Close the kebab menu on any click outside of it.
+  const menuRef = React.useRef(null);
+  React.useEffect(() => {
+    if (!menuOpenFor) return;
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpenFor(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenFor]);
 
   const viewsById = React.useMemo(() => {
     const map = {};
@@ -69,7 +89,17 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
     const nextFavouriteIds = isFavourited
       ? favouriteIds.filter((favId) => favId !== id)
       : [...favouriteIds, id];
-    onChange({ views, favouriteIds: nextFavouriteIds });
+    onChange({ views, favouriteIds: nextFavouriteIds, teamFavouriteIds });
+  };
+
+  // Admin-only: move a view between "All Views" and "Team Favourites".
+  const toggleTeamFavourite = (id) => {
+    const isTeamFavourited = teamFavouriteIds.includes(id);
+    const nextTeamFavouriteIds = isTeamFavourited
+      ? teamFavouriteIds.filter((favId) => favId !== id)
+      : [...teamFavouriteIds, id];
+    onChange({ views, favouriteIds, teamFavouriteIds: nextTeamFavouriteIds });
+    setMenuOpenFor(null);
   };
 
   // Live-reorders while dragging over another favourite row: dropping the
@@ -87,21 +117,35 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
     const next = [...favouriteIds];
     next.splice(fromIndex, 1);
     next.splice(toIndex, 0, draggedViewId);
-    onChange({ views, favouriteIds: next });
+    onChange({ views, favouriteIds: next, teamFavouriteIds });
   };
 
   const query = search.toLowerCase();
   const favourites = favouriteIds
     .map((id) => viewsById[id])
     .filter((v) => v && v.name.toLowerCase().includes(query));
-  const others = views.filter(
+  // A view that's both team- and personally-favourited only shows once, in
+  // Favourites — Team Favourites is where it "lives" until someone stars it.
+  const allTeamFavourites = teamFavouriteIds.map((id) => viewsById[id]).filter(Boolean);
+  const teamFavouritesMovedToFavourites =
+    allTeamFavourites.length > 0 && allTeamFavourites.every((v) => favouriteIds.includes(v.id));
+  const teamFavourites = allTeamFavourites.filter(
     (v) => !favouriteIds.includes(v.id) && v.name.toLowerCase().includes(query)
+  );
+  const others = views.filter(
+    (v) => !favouriteIds.includes(v.id) && !teamFavouriteIds.includes(v.id) && v.name.toLowerCase().includes(query)
   );
 
   const isSelected = (view) =>
     activeFilter?.inbox === inboxName && activeFilter?.type === view.name;
 
   const canDrag = search.trim() === '';
+
+  // A view that's a Team Favourite always shows the heart-circle icon, even
+  // after someone also personally favourites it and it moves up into the
+  // Favourites list — it stays team-pinned either way.
+  const rowIcon = (view) =>
+    teamFavouriteIds.includes(view.id) ? <HeartCircleIcon /> : <ViewTypeIcon icon={view.icon} />;
 
   const renderRow = (view, { draggable = false } = {}) => (
     <div
@@ -126,7 +170,7 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
         <span className="view-row-icon">
           {draggable ? (
             <>
-              <span className="icon-default"><ViewTypeIcon icon={view.icon} /></span>
+              <span className="icon-default">{rowIcon(view)}</span>
               <span
                 className="icon-drag-handle"
                 draggable={canDrag}
@@ -144,7 +188,7 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
               </span>
             </>
           ) : (
-            <ViewTypeIcon icon={view.icon} />
+            rowIcon(view)
           )}
         </span>
         <span className="view-row-name">{view.name}</span>
@@ -161,7 +205,68 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
         >
           <StarIcon filled={favouriteIds.includes(view.id)} />
         </button>
-        <span className="view-row-count">{view.count}</span>
+        {view.type === 'custom' && (activeRole === 'Admin' || !teamFavouriteIds.includes(view.id)) ? (
+          <div className="view-kebab-wrap">
+            <span className="view-row-count-under">{view.count}</span>
+            <button
+              type="button"
+              className={`view-kebab-btn ${menuOpenFor === view.id ? 'menu-open' : ''}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (menuOpenFor === view.id) {
+                  setMenuOpenFor(null);
+                  return;
+                }
+                const rect = e.currentTarget.getBoundingClientRect();
+                setMenuPosition({ top: rect.top - 6, left: rect.right + 6 });
+                setMenuOpenFor(view.id);
+              }}
+              aria-label="View options"
+            >
+              <span className="view-kebab-btn-inner"><KebabIcon /></span>
+            </button>
+            {menuOpenFor === view.id &&
+              createPortal(
+                <div
+                  className="view-kebab-menu"
+                  style={{ top: menuPosition.top, left: menuPosition.left }}
+                  ref={menuRef}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {activeRole === 'Admin' && (
+                    <>
+                      <button
+                        type="button"
+                        className="view-kebab-menu-item"
+                        onClick={() => toggleTeamFavourite(view.id)}
+                      >
+                        <UsersStarIcon />
+                        <span>{teamFavouriteIds.includes(view.id) ? 'Remove from Team Favourites' : 'Add to Team Favourites'}</span>
+                      </button>
+                      <div className="view-kebab-menu-divider" />
+                    </>
+                  )}
+                  <button type="button" className="view-kebab-menu-item" onClick={() => setMenuOpenFor(null)}>
+                    <PencilIcon />
+                    <span>Rename View</span>
+                  </button>
+                  <button type="button" className="view-kebab-menu-item" onClick={() => setMenuOpenFor(null)}>
+                    <SlidersIcon />
+                    <span>Edit View</span>
+                  </button>
+                  <button type="button" className="view-kebab-menu-item" onClick={() => setMenuOpenFor(null)}>
+                    <TrashIcon />
+                    <span>Delete View</span>
+                  </button>
+                </div>,
+                document.body
+              )}
+          </div>
+        ) : view.type === 'custom' ? (
+          <span className="view-row-count" />
+        ) : (
+          <span className="view-row-count">{view.count}</span>
+        )}
       </div>
     </div>
   );
@@ -206,6 +311,22 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
 
         <div className="view-list-divider" />
 
+        <div className="section-title margin-top">Team Favourites</div>
+        <div className="nav-group view-list">
+          {teamFavourites.length > 0 ? (
+            teamFavourites.map((view) => renderRow(view))
+          ) : (
+            <div className="view-list-empty team-favourites-empty">
+              {teamFavouritesMovedToFavourites
+                ? 'All Team Favourites have been added to your Favourites'
+                : 'No favourited views yet.'}
+            </div>
+          )}
+        </div>
+
+        <div className="view-list-divider" />
+
+        <div className="section-title margin-top">All Views</div>
         <div className="nav-group view-list">
           {others.map((view) => renderRow(view))}
         </div>

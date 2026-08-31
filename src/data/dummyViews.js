@@ -14,8 +14,16 @@ export const INITIAL_VIEWS_BY_INBOX = {
       { id: 'closed', name: 'Closed', type: 'system', icon: 'closed', count: 23 },
       { id: 'custom-1', name: 'Escalated', type: 'custom', icon: 'layers', count: 3 },
       { id: 'custom-2', name: 'VIP Customers', type: 'custom', icon: 'layers', count: 6 },
+      { id: 'custom-3', name: 'High Priority', type: 'custom', icon: 'layers', count: 9 },
+      { id: 'custom-4', name: 'SLA Breach', type: 'custom', icon: 'layers', count: 2 },
+      { id: 'custom-5', name: 'New Customers', type: 'custom', icon: 'layers', count: 11 },
+      { id: 'custom-6', name: 'Bug Reports', type: 'custom', icon: 'layers', count: 4 },
+      { id: 'custom-7', name: 'Feature Requests', type: 'custom', icon: 'layers', count: 7 },
+      { id: 'custom-8', name: 'Enterprise Accounts', type: 'custom', icon: 'layers', count: 5 },
+      { id: 'custom-9', name: 'Churn Risk', type: 'custom', icon: 'layers', count: 1 },
     ],
-    favouriteIds: ['mine', 'unassigned'],
+    favouriteIds: ['mine', 'unassigned', 'pending', 'closed'],
+    teamFavouriteIds: [],
   },
   Finance: {
     views: [
@@ -28,6 +36,7 @@ export const INITIAL_VIEWS_BY_INBOX = {
       { id: 'custom-1', name: 'Invoices Overdue', type: 'custom', icon: 'layers', count: 7 },
     ],
     favouriteIds: ['mine'],
+    teamFavouriteIds: [],
   },
   Shipping: {
     views: [
@@ -40,6 +49,7 @@ export const INITIAL_VIEWS_BY_INBOX = {
       { id: 'custom-1', name: 'Delayed Orders', type: 'custom', icon: 'layers', count: 2 },
     ],
     favouriteIds: ['mine'],
+    teamFavouriteIds: [],
   },
   Refund: {
     views: [
@@ -51,6 +61,7 @@ export const INITIAL_VIEWS_BY_INBOX = {
       { id: 'closed', name: 'Closed', type: 'system', icon: 'closed', count: 14 },
     ],
     favouriteIds: ['mine'],
+    teamFavouriteIds: [],
   },
   'IT Support': {
     views: [
@@ -63,6 +74,7 @@ export const INITIAL_VIEWS_BY_INBOX = {
       { id: 'custom-1', name: 'Access Requests', type: 'custom', icon: 'layers', count: 5 },
     ],
     favouriteIds: ['mine'],
+    teamFavouriteIds: [],
   },
 };
 

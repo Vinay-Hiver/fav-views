@@ -23,7 +23,7 @@ const LayersIcon = () => (
   </svg>
 );
 
-const MainSidebarPanel = ({ activeFilter, onFilterChange }) => {
+const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
   const [expandedInboxes, setExpandedInboxes] = React.useState({
     support: true,
     finance: false,
@@ -99,6 +99,7 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange }) => {
           onChange={(updated) =>
             setViewsByInbox((prev) => ({ ...prev, [allViewsInbox]: updated }))
           }
+          activeRole={activeRole}
         />
       </div>
     );

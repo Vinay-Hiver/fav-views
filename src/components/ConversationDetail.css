@@ -48,6 +48,38 @@
   color: #64758b;
 }
 
+.role-switch {
+  display: flex;
+  align-items: center;
+  background-color: var(--slateSurfaceSubtle, #f1f5f9);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.role-switch-option {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--slateTextSubtle, #64758b);
+  padding: 5px 12px;
+  border-radius: 6px;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.role-switch-option:hover {
+  color: var(--slateTextTitle, #0f172a);
+}
+
+.role-switch-option.active {
+  background-color: var(--slateSurfaceWhite, #ffffff);
+  color: var(--primarySurfaceDefault, #276cf0);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
 .subject-bar-detail {
   height: 48px;
   border-bottom: 1px solid #edf1f6;

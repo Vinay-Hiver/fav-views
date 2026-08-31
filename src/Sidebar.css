@@ -247,7 +247,7 @@
 }
 
 .section-title.margin-top {
-  padding-top: 20px;
+  padding-top: 12px;
 }
 
 .nav-group {
@@ -388,8 +388,12 @@
   color: var(--slateTextSubtle);
 }
 
+.team-favourites-empty {
+  padding-top: 0;
+}
+
 .view-list-divider {
-  margin: 12px 8px;
+  margin: 8px 8px;
   border-top: 1px solid var(--slateBorderLight);
 }
 
@@ -505,13 +509,131 @@
 }
 
 .view-row:hover .view-star-btn,
-.view-star-btn:has(svg[fill="#f59e0b"]) {
+.view-star-btn:has(svg[fill="#eab308"]) {
   opacity: 1;
 }
 
 .view-row-count {
   font-size: 14px;
   color: var(--slateTextTitle);
-  min-width: 16px;
+  /* Fixed width (fits up to 3 digits, e.g. "999") so the star's position
+     never shifts based on how many digits the count has. */
+  width: 28px;
+  min-width: 28px;
   text-align: right;
+}
+
+.view-kebab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--slateIconsSubtle);
+  /* Fills the wrap so it sits exactly over the count it replaces on hover. */
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.view-row:hover .view-kebab-btn {
+  opacity: 1;
+}
+
+/* The count shown at rest for a custom view — the kebab overlays and
+   replaces it on hover (or while its menu is open). */
+.view-row-count-under {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 14px;
+  color: var(--slateTextTitle);
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.1s;
+}
+
+.view-row:hover .view-row-count-under,
+.view-kebab-wrap:has(.menu-open) .view-row-count-under {
+  opacity: 0;
+}
+
+/* The hover/pressed background lives on this inner square, not the full
+   28px alignment column, so it reads as a normal small icon button. */
+.view-kebab-btn-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  transition: background-color 0.1s, color 0.1s;
+}
+
+.view-kebab-btn:hover .view-kebab-btn-inner {
+  background-color: var(--slateSurfaceSubtle200);
+  color: var(--slateTextTitle);
+}
+
+.view-kebab-wrap {
+  position: relative;
+  width: 28px;
+  min-width: 28px;
+  height: 20px;
+}
+
+/* Keep the kebab visible while its menu is open, even though the menu
+   itself is portaled to <body> (so it can escape the sidebar's clipped
+   scroll container) and is no longer a descendant to key off of. */
+.view-kebab-btn.menu-open {
+  opacity: 1;
+}
+
+.view-kebab-menu {
+  position: fixed;
+  z-index: 1000;
+  background-color: var(--slateSurfaceWhite, #ffffff);
+  border: 1px solid var(--slateBorderLight);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  padding: 4px;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.view-kebab-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--slateTextTitle);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.view-kebab-menu-item:hover {
+  background-color: var(--slateSurfaceSubtle100-hover);
+}
+
+.view-kebab-menu-item svg {
+  flex-shrink: 0;
+  color: var(--slateIconsSubtle);
+}
+
+.view-kebab-menu-divider {
+  border-top: 1px solid var(--slateBorderLight);
+  margin: 4px 4px;
 }
