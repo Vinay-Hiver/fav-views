@@ -1,18 +1,27 @@
 import React from 'react';
+import AllViewsPanel from './AllViewsPanel';
+import { ViewTypeIcon } from './viewIcons';
+import { INITIAL_VIEWS_BY_INBOX } from '../data/dummyViews';
 
 // Icons
 import allMailIcon from '../assets/icons/all-mail.svg';
-import allViewsIcon from '../assets/icons/all-views.svg';
 import assignedToMeIcon from '../assets/icons/assigned-to-me.svg';
 import draftIcon from '../assets/icons/draft.svg';
 import inboxIcon from '../assets/icons/inbox-icon.svg';
-import mineIcon from '../assets/icons/mine.svg';
 import newConversationIcon from '../assets/icons/new-conversation.svg';
 import sentIcon from '../assets/icons/sent.svg';
 import tagsIcon from '../assets/icons/tags.svg';
-import unassignedIcon from '../assets/icons/unassigned.svg';
 
 import sChevronDown from '../assets/icons/Read/side-bar-chevron.svg';
+
+// Same "layers" glyph used for custom Views in the All Views panel
+const LayersIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="item-icon">
+    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+    <polyline points="2 17 12 22 22 17"></polyline>
+    <polyline points="2 12 12 17 22 12"></polyline>
+  </svg>
+);
 
 const MainSidebarPanel = ({ activeFilter, onFilterChange }) => {
   const [expandedInboxes, setExpandedInboxes] = React.useState({
@@ -23,6 +32,12 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange }) => {
     itSupport: false
   });
 
+  const [allViewsInbox, setAllViewsInbox] = React.useState(null);
+
+  // Views (and each inbox's favourited View ids, in display order) live here
+  // so they persist across opening/closing All Views and drive the home nav.
+  const [viewsByInbox, setViewsByInbox] = React.useState(INITIAL_VIEWS_BY_INBOX);
+
   const toggleInbox = (inbox) => {
     setExpandedInboxes(prev => ({
       ...prev,
@@ -31,42 +46,26 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange }) => {
   };
 
   const renderNestedItems = (inboxName) => {
-    const counts = {
-      'Support-Mine': 2,
-      'Support-Unassigned': 4,
-      'Finance-Mine': 5,
-      'Finance-Unassigned': 3,
-      'Shipping-Mine': 3,
-      'Shipping-Unassigned': 2,
-      'Refund-Mine': 2,
-      'Refund-Unassigned': 3,
-      'IT Support-Mine': 3,
-      'IT Support-Unassigned': 2
-    };
+    const { views, favouriteIds } = viewsByInbox[inboxName];
+    const viewsById = {};
+    views.forEach((v) => { viewsById[v.id] = v; });
+    const favouritedViews = favouriteIds.map((id) => viewsById[id]).filter(Boolean);
 
     return (
       <div className="nav-group-nested">
-        <div 
-          className={`nav-item ${activeFilter.inbox === inboxName && activeFilter.type === 'Mine' ? 'active' : ''}`}
-          onClick={() => onFilterChange({ inbox: inboxName, type: 'Mine' })}
-        >
-          <div className="nav-content">
-            <img src={mineIcon} alt="" width="16" height="16" className="item-icon" />
-            <span>Mine</span>
+        {favouritedViews.map((view) => (
+          <div
+            key={view.id}
+            className={`nav-item ${activeFilter.inbox === inboxName && activeFilter.type === view.name ? 'active' : ''}`}
+            onClick={() => onFilterChange({ inbox: inboxName, type: view.name })}
+          >
+            <div className="nav-content">
+              <span className="item-icon"><ViewTypeIcon icon={view.icon} /></span>
+              <span>{view.name}</span>
+            </div>
+            <span className="count">{view.count}</span>
           </div>
-          <span className="count">{counts[`${inboxName}-Mine`]}</span>
-        </div>
-        
-        <div 
-          className={`nav-item ${activeFilter.inbox === inboxName && activeFilter.type === 'Unassigned' ? 'active' : ''}`}
-          onClick={() => onFilterChange({ inbox: inboxName, type: 'Unassigned' })}
-        >
-          <div className="nav-content">
-            <img src={unassignedIcon} alt="" width="16" height="16" className="item-icon" />
-            <span>Unassigned</span>
-          </div>
-          <span className="count">{counts[`${inboxName}-Unassigned`]}</span>
-        </div>
+        ))}
 
       <div className="nav-item">
         <div className="nav-content">
@@ -75,15 +74,35 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange }) => {
         </div>
       </div>
 
-      <div className="nav-item">
+      <div
+        className="nav-item"
+        onClick={() => setAllViewsInbox(inboxName)}
+      >
         <div className="nav-content">
-          <img src={allViewsIcon} alt="" width="16" height="16" className="item-icon" />
+          <LayersIcon />
           <span>All Views</span>
         </div>
       </div>
     </div>
   );
 };
+
+  if (allViewsInbox) {
+    return (
+      <div className="side-nav-expanded">
+        <AllViewsPanel
+          inboxName={allViewsInbox}
+          onBack={() => setAllViewsInbox(null)}
+          activeFilter={activeFilter}
+          onFilterChange={onFilterChange}
+          viewsData={viewsByInbox[allViewsInbox]}
+          onChange={(updated) =>
+            setViewsByInbox((prev) => ({ ...prev, [allViewsInbox]: updated }))
+          }
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="side-nav-expanded">
