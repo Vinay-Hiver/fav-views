@@ -1,8 +1,9 @@
 // Dummy Views data per Shared Inbox.
 // `views` holds every View in the inbox (system + custom), in catalogue order.
-// `favouriteIds` is the ordered list of the user's favourited View ids for that
-// inbox (max 5) — this order drives both the All Views "Favourites" group and
-// the home screen nav.
+// `favouriteIds` is keyed by role — Admin and Agent each have their own
+// personal favourites, kept entirely separate — with each value the ordered
+// list of favourited View ids for that inbox (max 5). This order drives both
+// the All Views "Favourites" group and the home screen nav.
 export const INITIAL_VIEWS_BY_INBOX = {
   Support: {
     views: [
@@ -13,16 +14,19 @@ export const INITIAL_VIEWS_BY_INBOX = {
       { id: 'pending', name: 'Pending', type: 'system', icon: 'pending', count: 5 },
       { id: 'closed', name: 'Closed', type: 'system', icon: 'closed', count: 23 },
       { id: 'custom-1', name: 'Escalated', type: 'custom', icon: 'layers', count: 3 },
-      { id: 'custom-2', name: 'VIP Customers', type: 'custom', icon: 'layers', count: 6 },
+      { id: 'custom-2', name: 'VIP', type: 'custom', icon: 'layers', count: 6 },
       { id: 'custom-3', name: 'High Priority', type: 'custom', icon: 'layers', count: 9 },
       { id: 'custom-4', name: 'SLA Breach', type: 'custom', icon: 'layers', count: 2 },
-      { id: 'custom-5', name: 'New Customers', type: 'custom', icon: 'layers', count: 11 },
+      { id: 'custom-5', name: 'New', type: 'custom', icon: 'layers', count: 11 },
       { id: 'custom-6', name: 'Bug Reports', type: 'custom', icon: 'layers', count: 4 },
-      { id: 'custom-7', name: 'Feature Requests', type: 'custom', icon: 'layers', count: 7 },
-      { id: 'custom-8', name: 'Enterprise Accounts', type: 'custom', icon: 'layers', count: 5 },
+      { id: 'custom-7', name: 'Features', type: 'custom', icon: 'layers', count: 7 },
+      { id: 'custom-8', name: 'Enterprise', type: 'custom', icon: 'layers', count: 5 },
       { id: 'custom-9', name: 'Churn Risk', type: 'custom', icon: 'layers', count: 1 },
     ],
-    favouriteIds: ['mine', 'unassigned', 'pending', 'closed'],
+    favouriteIds: {
+      Admin: ['mine', 'unassigned', 'pending', 'closed'],
+      Agent: ['mine', 'unassigned', 'closed'],
+    },
     teamFavouriteIds: [],
   },
   Finance: {
@@ -35,7 +39,7 @@ export const INITIAL_VIEWS_BY_INBOX = {
       { id: 'closed', name: 'Closed', type: 'system', icon: 'closed', count: 40 },
       { id: 'custom-1', name: 'Invoices Overdue', type: 'custom', icon: 'layers', count: 7 },
     ],
-    favouriteIds: ['mine'],
+    favouriteIds: { Admin: ['mine'], Agent: ['mine'] },
     teamFavouriteIds: [],
   },
   Shipping: {
@@ -48,7 +52,7 @@ export const INITIAL_VIEWS_BY_INBOX = {
       { id: 'closed', name: 'Closed', type: 'system', icon: 'closed', count: 17 },
       { id: 'custom-1', name: 'Delayed Orders', type: 'custom', icon: 'layers', count: 2 },
     ],
-    favouriteIds: ['mine'],
+    favouriteIds: { Admin: ['mine'], Agent: ['mine'] },
     teamFavouriteIds: [],
   },
   Refund: {
@@ -60,7 +64,7 @@ export const INITIAL_VIEWS_BY_INBOX = {
       { id: 'pending', name: 'Pending', type: 'system', icon: 'pending', count: 6 },
       { id: 'closed', name: 'Closed', type: 'system', icon: 'closed', count: 14 },
     ],
-    favouriteIds: ['mine'],
+    favouriteIds: { Admin: ['mine'], Agent: ['mine'] },
     teamFavouriteIds: [],
   },
   'IT Support': {
@@ -73,7 +77,7 @@ export const INITIAL_VIEWS_BY_INBOX = {
       { id: 'closed', name: 'Closed', type: 'system', icon: 'closed', count: 19 },
       { id: 'custom-1', name: 'Access Requests', type: 'custom', icon: 'layers', count: 5 },
     ],
-    favouriteIds: ['mine'],
+    favouriteIds: { Admin: ['mine'], Agent: ['mine'] },
     teamFavouriteIds: [],
   },
 };

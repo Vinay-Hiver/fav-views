@@ -23,7 +23,9 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
   const [menuPosition, setMenuPosition] = React.useState({ top: 0, left: 0 });
 
   const views = viewsData?.views || [];
-  const favouriteIds = viewsData?.favouriteIds || [];
+  // Admin and Agent each have their own personal Favourites for this inbox.
+  const favouriteIdsByRole = viewsData?.favouriteIds || {};
+  const favouriteIds = favouriteIdsByRole[activeRole] || [];
   const teamFavouriteIds = viewsData?.teamFavouriteIds || [];
 
   // Close the kebab menu on any click outside of it.
@@ -89,7 +91,11 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
     const nextFavouriteIds = isFavourited
       ? favouriteIds.filter((favId) => favId !== id)
       : [...favouriteIds, id];
-    onChange({ views, favouriteIds: nextFavouriteIds, teamFavouriteIds });
+    onChange({
+      views,
+      favouriteIds: { ...favouriteIdsByRole, [activeRole]: nextFavouriteIds },
+      teamFavouriteIds,
+    });
   };
 
   // Admin-only: move a view between "All Views" and "Team Favourites".
@@ -98,7 +104,7 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
     const nextTeamFavouriteIds = isTeamFavourited
       ? teamFavouriteIds.filter((favId) => favId !== id)
       : [...teamFavouriteIds, id];
-    onChange({ views, favouriteIds, teamFavouriteIds: nextTeamFavouriteIds });
+    onChange({ views, favouriteIds: favouriteIdsByRole, teamFavouriteIds: nextTeamFavouriteIds });
     setMenuOpenFor(null);
   };
 
@@ -117,7 +123,11 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
     const next = [...favouriteIds];
     next.splice(fromIndex, 1);
     next.splice(toIndex, 0, draggedViewId);
-    onChange({ views, favouriteIds: next, teamFavouriteIds });
+    onChange({
+      views,
+      favouriteIds: { ...favouriteIdsByRole, [activeRole]: next },
+      teamFavouriteIds,
+    });
   };
 
   const query = search.toLowerCase();
@@ -262,8 +272,6 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
                 document.body
               )}
           </div>
-        ) : view.type === 'custom' ? (
-          <span className="view-row-count" />
         ) : (
           <span className="view-row-count">{view.count}</span>
         )}

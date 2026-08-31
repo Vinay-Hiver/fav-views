@@ -1,6 +1,6 @@
 import React from 'react';
 import AllViewsPanel from './AllViewsPanel';
-import { ViewTypeIcon } from './viewIcons';
+import { ViewTypeIcon, HeartCircleIcon } from './viewIcons';
 import { INITIAL_VIEWS_BY_INBOX } from '../data/dummyViews';
 
 // Icons
@@ -34,6 +34,18 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
 
   const [allViewsInbox, setAllViewsInbox] = React.useState(null);
 
+  // Switching Admin/Agent always drops back to the home nav — e.g. an admin
+  // pinning Team Favourites from within All Views, then flipping to Agent to
+  // see how it looks, should land on the sidebar's home screen first.
+  const isFirstRoleRender = React.useRef(true);
+  React.useEffect(() => {
+    if (isFirstRoleRender.current) {
+      isFirstRoleRender.current = false;
+      return;
+    }
+    setAllViewsInbox(null);
+  }, [activeRole]);
+
   // Views (and each inbox's favourited View ids, in display order) live here
   // so they persist across opening/closing All Views and drive the home nav.
   const [viewsByInbox, setViewsByInbox] = React.useState(INITIAL_VIEWS_BY_INBOX);
@@ -46,7 +58,8 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
   };
 
   const renderNestedItems = (inboxName) => {
-    const { views, favouriteIds } = viewsByInbox[inboxName];
+    const { views, favouriteIds: favouriteIdsByRole, teamFavouriteIds } = viewsByInbox[inboxName];
+    const favouriteIds = favouriteIdsByRole[activeRole] || [];
     const viewsById = {};
     views.forEach((v) => { viewsById[v.id] = v; });
     const favouritedViews = favouriteIds.map((id) => viewsById[id]).filter(Boolean);
@@ -60,7 +73,9 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
             onClick={() => onFilterChange({ inbox: inboxName, type: view.name })}
           >
             <div className="nav-content">
-              <span className="item-icon"><ViewTypeIcon icon={view.icon} /></span>
+              <span className="item-icon">
+                {teamFavouriteIds.includes(view.id) ? <HeartCircleIcon /> : <ViewTypeIcon icon={view.icon} />}
+              </span>
               <span>{view.name}</span>
             </div>
             <span className="count">{view.count}</span>

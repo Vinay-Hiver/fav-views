@@ -516,10 +516,10 @@
 .view-row-count {
   font-size: 14px;
   color: var(--slateTextTitle);
-  /* Fixed width (fits up to 3 digits, e.g. "999") so the star's position
+  /* Fixed width (fits up to 2 digits, e.g. "99") so the star's position
      never shifts based on how many digits the count has. */
-  width: 28px;
-  min-width: 28px;
+  width: 20px;
+  min-width: 20px;
   text-align: right;
 }
 
@@ -569,8 +569,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 6px;
   transition: background-color 0.1s, color 0.1s;
 }
@@ -582,8 +582,8 @@
 
 .view-kebab-wrap {
   position: relative;
-  width: 28px;
-  min-width: 28px;
+  width: 20px;
+  min-width: 20px;
   height: 20px;
 }
 
