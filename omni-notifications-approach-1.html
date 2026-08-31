@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notification settings — Approach 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#2f6fed;--blue-soft:#eaf1fe;--amber:#f5a623;
+  --text:#1f2430;--text-2:#5b6472;--text-3:#8b93a1;
+  --line:#e7eaef;--line-2:#eef0f4;--fill:#f4f6f9;--card:#fff;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Hanken Grotesk',system-ui,sans-serif;background:#eef1f5;color:var(--text);padding:34px 18px 70px;}
+.wrap{max-width:760px;margin:0 auto;}
+h1{font-size:23px;font-weight:700;}
+.intro{font-size:14px;color:var(--text-2);margin-top:6px;line-height:1.5;}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-top:20px;overflow:hidden;}
+
+/* ---- sound section ---- */
+.sound-head{display:flex;align-items:center;gap:14px;padding:16px 20px;}
+.sound-head .ic{width:34px;height:34px;border-radius:9px;background:#fff4e2;color:var(--amber);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sound-head .ic svg{width:19px;height:19px}
+.sound-head .txt{flex:1;}
+.sound-head h2{font-size:15.5px;font-weight:700;}
+.sound-head p{font-size:12.5px;color:var(--text-2);margin-top:2px;}
+.sound-body{border-top:1px solid var(--line-2);background:#fafbfc;padding:6px 20px 12px;}
+.sound-body.hidden{display:none;}
+.sound-sub{font-size:12px;color:var(--text-3);padding:12px 0 6px;}
+.srow{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line-2);}
+.srow:last-child{border-bottom:none;}
+.srow .chn{display:flex;align-items:center;gap:9px;flex:1;font-size:13.5px;font-weight:500;}
+.chip-ico{width:24px;height:24px;border-radius:6px;background:var(--fill);display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.tone{display:inline-flex;align-items:center;gap:6px;opacity:1;transition:.12s;}
+.tone.off{opacity:.35;pointer-events:none;}
+.tone-play{width:24px;height:24px;border:1px solid var(--line);border-radius:50%;background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--text-2);}
+.tone-play .tri{width:0;height:0;border-top:4px solid transparent;border-bottom:4px solid transparent;border-left:6px solid currentColor;margin-left:1px;}
+.tone-play.playing{background:var(--amber);color:#fff;border-color:var(--amber);}
+.tone-btn{border:1px solid var(--line);background:#fff;border-radius:20px;padding:5px 11px;font-family:inherit;font-size:11.5px;color:var(--text-2);cursor:pointer;font-weight:600;}
+
+/* ---- switch & star ---- */
+.sw{width:40px;height:23px;border-radius:20px;background:#d3d7df;border:none;position:relative;cursor:pointer;transition:.13s;flex-shrink:0;}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:.13s;}
+.sw.on{background:var(--blue);}
+.sw.on::after{transform:translateX(17px);}
+.star{background:none;border:none;cursor:pointer;color:#d3d7df;padding:3px;line-height:0;transition:.1s;}
+.star svg{width:21px;height:21px;}
+.star.on{color:var(--amber);}
+.star:hover:not(.disabled){color:var(--amber);}
+.star.disabled{opacity:.25;pointer-events:none;}
+
+/* ---- tabs ---- */
+.tabs{display:flex;gap:2px;padding:6px 12px 0;border-bottom:1px solid var(--line);overflow-x:auto;}
+.tab{border:none;background:none;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--text-3);padding:12px 15px 13px;cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:7px;}
+.tab:hover{color:var(--text-2);}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+.tab .chip-ico{width:20px;height:20px;font-size:11px;}
+.tab.active .chip-ico{background:var(--blue-soft);}
+
+/* ---- table ---- */
+.tbl-head{padding:18px 20px 4px;font-size:12.5px;color:var(--text-2);}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-3);text-align:left;padding:10px 20px;border-bottom:1.5px solid var(--line);}
+thead th.c{text-align:center;width:130px;}
+.bucket td{background:#fafbfc;font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-2);padding:10px 20px;border-bottom:1px solid var(--line-2);}
+tbody tr.item td{padding:13px 20px;border-bottom:1px solid var(--line-2);vertical-align:middle;}
+tbody tr.item:hover td{background:#fafbfc;}
+.n-type{font-size:13.5px;}
+.n-spec{font-size:10.5px;font-weight:700;color:var(--amber);background:#fef4e2;border-radius:5px;padding:1px 7px;margin-left:8px;vertical-align:middle;}
+.c{text-align:center;}
+
+/* info tooltip */
+.info{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1.4px solid var(--text-3);color:var(--text-3);font-size:10px;font-weight:700;margin-left:6px;cursor:help;position:relative;vertical-align:middle;font-style:italic;}
+.info .tip{position:absolute;bottom:150%;right:-8px;background:#1f2430;color:#fff;font-size:11.5px;font-weight:400;line-height:1.45;letter-spacing:0;text-transform:none;padding:9px 12px;border-radius:8px;width:230px;opacity:0;pointer-events:none;transition:.14s;z-index:5;box-shadow:0 8px 22px rgba(0,0,0,.2);}
+.info .tip::after{content:"";position:absolute;top:100%;right:12px;border:6px solid transparent;border-top-color:#1f2430;}
+.info:hover .tip{opacity:1;}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Notification settings</h1>
+  <p class="intro">Set up sounds once at the top, then configure each channel using the tabs below.</p>
+
+  <!-- SOUND -->
+  <div class="card">
+    <div class="sound-head">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14"/></svg></span>
+      <div class="txt"><h2>Sound notifications</h2><p>Play a sound when notifications arrive. Turn on to choose sounds per channel.</p></div>
+      <button class="sw on" id="soundMaster" onclick="toggleMaster()"></button>
+    </div>
+    <div class="sound-body" id="soundBody">
+      <div class="sound-sub">Pick which channels play a sound and choose a tone for each.</div>
+      <div id="soundRows"></div>
+    </div>
+  </div>
+
+  <!-- NOTIFICATIONS -->
+  <div class="card">
+    <div class="tabs" id="tabs"></div>
+    <div class="tbl-head" id="tblHead"></div>
+    <table>
+      <thead><tr>
+        <th>Notification type</th>
+        <th class="c">Enable notification</th>
+        <th class="c">Set as priority
+          <span class="info">i<span class="tip">Priority notifications appear at the very top of your list, so the things that matter most reach you first.</span></span>
+        </th>
+      </tr></thead>
+      <tbody id="tblBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const STAR=f=>`<svg viewBox="0 0 24 24" fill="${f?'currentColor':'none'}" stroke="currentColor" stroke-width="1.6"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 17l-5.2 2.9 1-5.8L3.5 9.2l5.9-.9z"/></svg>`;
+
+const channels=[
+  {id:'email',name:'Email',ico:'✉'},
+  {id:'chat',name:'Chat',ico:'💬'},
+  {id:'slack',name:'Slack',ico:'#'},
+  {id:'whatsapp',name:'WhatsApp',ico:'◐'},
+  {id:'voice',name:'Voice',ico:'☎'},
+];
+
+// 12 shared activities in 3 buckets
+const buckets=[
+  {name:'Assigned to me', items:[
+    {id:'assigned',label:'A conversation is assigned to me'},
+    {id:'reply_mine',label:'A new reply on a conversation assigned to me'},
+    {id:'mention',label:'Someone @mentions me in a note'},
+    {id:'reassigned',label:'A conversation is reassigned away from me'},
+  ]},
+  {name:'New activity', items:[
+    {id:'new_convo',label:'A new conversation comes in'},
+    {id:'reopened',label:'A conversation is reopened'},
+    {id:'followed',label:'A conversation I follow is updated'},
+    {id:'cust_reply',label:'A customer replies'},
+  ]},
+  {name:'Deadlines & feedback', items:[
+    {id:'sla_first',label:'First-response SLA is about to breach'},
+    {id:'sla_res',label:'Resolution SLA is breached'},
+    {id:'csat',label:'CSAT feedback is received'},
+    {id:'resolved',label:'A conversation is marked resolved'},
+  ]},
+];
+// channel-specific extras
+const specific={
+  email:[{id:'bounce',label:'An email bounces or fails to deliver'}],
+  chat:[{id:'queue',label:'A visitor is waiting in the queue'}],
+  slack:[{id:'added',label:'You’re added to a Slack channel'}],
+  whatsapp:[{id:'window',label:'The 24-hour reply window is about to close'}],
+  voice:[{id:'voicemail',label:'A voicemail is left'},{id:'missed',label:'You missed a call'}],
+};
+
+// state
+let master=true, activeTab='email';
+const chSound={}; channels.forEach(c=>chSound[c.id]={on:c.id!=='slack', tone:{email:'Chime',chat:'Ping',slack:'Knock',whatsapp:'Pop',voice:'Ring'}[c.id]});
+const state={}; // state[channel][itemId]={en,pri}
+channels.forEach(c=>{
+  state[c.id]={};
+  const all=[...buckets.flatMap(b=>b.items),...(specific[c.id]||[])];
+  all.forEach(it=>state[c.id][it.id]={en:false,pri:false});
+  // sensible defaults
+  ['assigned','mention','sla_first','sla_res'].forEach(id=>{if(state[c.id][id]){state[c.id][id].en=true;}});
+  ['assigned','sla_res'].forEach(id=>{if(state[c.id][id]){state[c.id][id].pri=true;}});
+});
+
+const TONES=['Chime','Ping','Knock','Pop','Ring','Soft'];
+
+function toggleMaster(){master=!master;document.getElementById('soundMaster').classList.toggle('on',master);document.getElementById('soundBody').classList.toggle('hidden',!master);}
+function toggleChSound(c){chSound[c].on=!chSound[c].on;renderSound();}
+function cycleTone(c){let i=TONES.indexOf(chSound[c].tone);chSound[c].tone=TONES[(i+1)%TONES.length];renderSound();}
+function play(b){b.classList.add('playing');setTimeout(()=>b.classList.remove('playing'),600);}
+function setTab(c){activeTab=c;render();}
+function toggleEn(c,id){const s=state[c][id];s.en=!s.en;if(!s.en)s.pri=false;render();}
+function togglePri(c,id){const s=state[c][id];if(s.en){s.pri=!s.pri;render();}}
+
+function renderSound(){
+  document.getElementById('soundRows').innerHTML=channels.map(c=>`<div class="srow">
+    <span class="chn"><span class="chip-ico">${c.ico}</span>${c.name}</span>
+    <span class="tone ${chSound[c.id].on?'':'off'}">
+      <button class="tone-play" onclick="play(this)"><span class="tri"></span></button>
+      <button class="tone-btn" onclick="cycleTone('${c.id}')">${chSound[c.id].tone}</button>
+    </span>
+    <button class="sw ${chSound[c.id].on?'on':''}" onclick="toggleChSound('${c.id}')"></button>
+  </div>`).join('');
+}
+
+function render(){
+  renderSound();
+  document.getElementById('soundMaster').classList.toggle('on',master);
+  document.getElementById('soundBody').classList.toggle('hidden',!master);
+
+  document.getElementById('tabs').innerHTML=channels.map(c=>`<button class="tab ${c.id===activeTab?'active':''}" onclick="setTab('${c.id}')"><span class="chip-ico">${c.ico}</span>${c.name}</button>`).join('');
+
+  const cName=channels.find(c=>c.id===activeTab).name;
+  document.getElementById('tblHead').innerHTML=`Choose what notifies you on <b>${cName}</b>, and star the ones that should show first.`;
+
+  const rows=[];
+  buckets.forEach(b=>{
+    rows.push(`<tr class="bucket"><td colspan="3">${b.name}</td></tr>`);
+    b.items.forEach(it=>rows.push(itemRow(activeTab,it,false)));
+  });
+  const spec=specific[activeTab];
+  if(spec&&spec.length){
+    rows.push(`<tr class="bucket"><td colspan="3">Only on ${cName}</td></tr>`);
+    spec.forEach(it=>rows.push(itemRow(activeTab,it,true)));
+  }
+  document.getElementById('tblBody').innerHTML=rows.join('');
+}
+function itemRow(c,it,isSpec){
+  const s=state[c][it.id];
+  return `<tr class="item">
+    <td><span class="n-type">${it.label}</span>${isSpec?`<span class="n-spec">Only here</span>`:''}</td>
+    <td class="c"><button class="sw ${s.en?'on':''}" onclick="toggleEn('${c}','${it.id}')"></button></td>
+    <td class="c"><button class="star ${s.pri?'on':''} ${s.en?'':'disabled'}" onclick="togglePri('${c}','${it.id}')">${STAR(s.pri)}</button></td>
+  </tr>`;
+}
+render();
+</script>
+</body>
+</html>
