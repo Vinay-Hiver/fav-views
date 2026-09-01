@@ -137,12 +137,9 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
     .filter((v) => v && v.name.toLowerCase().includes(query));
   // A view that's both team- and personally-favourited only shows once, in
   // Favourites — Team Favourites is where it "lives" until someone stars it.
-  const allTeamFavourites = teamFavouriteIds.map((id) => viewsById[id]).filter(Boolean);
-  const teamFavouritesMovedToFavourites =
-    allTeamFavourites.length > 0 && allTeamFavourites.every((v) => favouriteIds.includes(v.id));
-  const teamFavourites = allTeamFavourites.filter(
-    (v) => !favouriteIds.includes(v.id) && v.name.toLowerCase().includes(query)
-  );
+  const teamFavourites = teamFavouriteIds
+    .map((id) => viewsById[id])
+    .filter((v) => v && !favouriteIds.includes(v.id) && v.name.toLowerCase().includes(query));
   const others = views.filter(
     (v) => !favouriteIds.includes(v.id) && !teamFavouriteIds.includes(v.id) && v.name.toLowerCase().includes(query)
   );
@@ -357,26 +354,12 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
           )}
         </div>
 
-        {/* An Agent shouldn't even know Team Favourites exists as a concept
-            until an Admin has actually pinned something — Admins still see
-            it (empty state included) so they have somewhere to manage it. */}
-        {(activeRole === 'Admin' || allTeamFavourites.length > 0) && (
-          <>
-            <div className="view-list-divider" />
-
-            <div className="section-title margin-top">Team Favourites</div>
-            <div className="nav-group view-list">
-              {teamFavourites.length > 0 ? (
-                teamFavourites.map((view) => renderRow(view))
-              ) : (
-                <div className="view-list-empty team-favourites-empty">
-                  {teamFavouritesMovedToFavourites
-                    ? 'All Team Favourites have been added to your Favourites'
-                    : 'No favourited views yet.'}
-                </div>
-              )}
-            </div>
-          </>
+        {/* No empty state here at all — Team Favourites only ever appears
+            once there's actually something in it to show. */}
+        {teamFavourites.length > 0 && (
+          <div className="nav-group view-list">
+            {teamFavourites.map((view) => renderRow(view))}
+          </div>
         )}
 
         <div className="view-list-divider" />
