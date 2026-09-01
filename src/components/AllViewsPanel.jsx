@@ -295,7 +295,13 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
               )}
           </span>
         )}
-        {view.type === 'custom' && (activeRole === 'Admin' || !teamFavouriteIds.includes(view.id)) ? (
+        {(view.type === 'custom'
+          ? activeRole === 'Admin' || !teamFavouriteIds.includes(view.id)
+          // Predefined (system) views have nothing an Agent can do from
+          // here — only Admin gets the kebab, and only to pin/unpin it as
+          // a Team Favourite. No Rename/Edit/Delete for these.
+          : activeRole === 'Admin'
+        ) ? (
           <div className="view-kebab-wrap">
             <span className="view-row-count-under">{view.count}</span>
             <button
@@ -348,22 +354,26 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
                             </span>
                           </span>
                         </button>
-                        <div className="view-kebab-menu-divider" />
+                        {view.type === 'custom' && <div className="view-kebab-menu-divider" />}
                       </>
                     );
                   })()}
-                  <button type="button" className="view-kebab-menu-item" onClick={() => setMenuOpenFor(null)}>
-                    <RenameIcon />
-                    <span>Rename View</span>
-                  </button>
-                  <button type="button" className="view-kebab-menu-item" onClick={() => setMenuOpenFor(null)}>
-                    <PencilIcon />
-                    <span>Edit View</span>
-                  </button>
-                  <button type="button" className="view-kebab-menu-item" onClick={() => setMenuOpenFor(null)}>
-                    <TrashIcon />
-                    <span>Delete View</span>
-                  </button>
+                  {view.type === 'custom' && (
+                    <>
+                      <button type="button" className="view-kebab-menu-item" onClick={() => setMenuOpenFor(null)}>
+                        <RenameIcon />
+                        <span>Rename View</span>
+                      </button>
+                      <button type="button" className="view-kebab-menu-item" onClick={() => setMenuOpenFor(null)}>
+                        <PencilIcon />
+                        <span>Edit View</span>
+                      </button>
+                      <button type="button" className="view-kebab-menu-item" onClick={() => setMenuOpenFor(null)}>
+                        <TrashIcon />
+                        <span>Delete View</span>
+                      </button>
+                    </>
+                  )}
                 </div>,
                 document.body
               )}
