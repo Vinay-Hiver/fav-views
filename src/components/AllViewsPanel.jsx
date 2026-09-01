@@ -317,20 +317,27 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
           )}
         </div>
 
-        <div className="view-list-divider" />
+        {/* An Agent shouldn't even know Team Favourites exists as a concept
+            until an Admin has actually pinned something — Admins still see
+            it (empty state included) so they have somewhere to manage it. */}
+        {(activeRole === 'Admin' || allTeamFavourites.length > 0) && (
+          <>
+            <div className="view-list-divider" />
 
-        <div className="section-title margin-top">Team Favourites</div>
-        <div className="nav-group view-list">
-          {teamFavourites.length > 0 ? (
-            teamFavourites.map((view) => renderRow(view))
-          ) : (
-            <div className="view-list-empty team-favourites-empty">
-              {teamFavouritesMovedToFavourites
-                ? 'All Team Favourites have been added to your Favourites'
-                : 'No favourited views yet.'}
+            <div className="section-title margin-top">Team Favourites</div>
+            <div className="nav-group view-list">
+              {teamFavourites.length > 0 ? (
+                teamFavourites.map((view) => renderRow(view))
+              ) : (
+                <div className="view-list-empty team-favourites-empty">
+                  {teamFavouritesMovedToFavourites
+                    ? 'All Team Favourites have been added to your Favourites'
+                    : 'No favourited views yet.'}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
 
         <div className="view-list-divider" />
 

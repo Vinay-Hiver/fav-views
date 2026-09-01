@@ -271,7 +271,7 @@
 }
 
 .nav-item.active {
-  background-color: var(--slateSurfaceSubtle200);
+  background-color: var(--primarySurfaceSubtle);
 }
 
 .nav-content {
@@ -286,8 +286,17 @@
   font-weight: 400;
 }
 
+.nav-item.active .nav-content span,
+.nav-item.active .count {
+  color: var(--primarySurfaceDefault);
+}
+
 .nav-item.active .nav-content span {
   font-weight: 500;
+}
+
+.nav-item.active .item-icon {
+  color: var(--primarySurfaceDefault);
 }
 
 .item-icon {
@@ -299,8 +308,13 @@
 .nav-item.accordion-trigger .chevron-icon {
   width: 14px;
   height: 14px;
-  transition: transform 0.2s ease;
+  opacity: 0;
+  transition: transform 0.2s ease, opacity 0.15s ease;
   transform: rotate(0deg); /* Point right when collapsed */
+}
+
+.nav-item.accordion-trigger:hover .chevron-icon {
+  opacity: 1;
 }
 
 .nav-item.accordion-trigger.expanded .chevron-icon,
@@ -308,14 +322,37 @@
   transform: rotate(90deg); /* Point down when expanded */
 }
 
+/* .nav-group-nested-wrapper's open/close animation is driven inline by the
+   NestedGroup component (MainSidebarPanel.jsx), which measures the exact
+   pixel height and transitions `height` directly. */
+
 .nav-group-nested {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
+  position: relative;
+}
+
+/* Guide line down the nested list, centered under the inbox icon above
+   (nav-item padding-left 8px + half of the 16px icon = 16px), ending at the
+   vertical center of the last row (All Views) — half its 34px height. */
+.nav-group-nested::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 17px;
+  left: 16px;
+  width: 1px;
+  background-color: var(--slateBorderLight);
 }
 
 .nav-group-nested .nav-item {
-  padding-left: 36px;
+  /* Box starts to the right of the guide line (at 16px) with room to
+     spare, so the hover/active background never touches or covers it —
+     padding-left keeps the icon at the same 36px indent as before. */
+  margin-left: 24px;
+  padding-left: 12px;
 }
 
 .count {
