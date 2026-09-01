@@ -62,30 +62,27 @@ export const HeartCircleIcon = () => (
   </svg>
 );
 
+// Untitled UI "tabler-icon-forms" glyph (mirrored, per Figma), used for
+// "Rename View" (node 303:2052).
+export const RenameIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round">
+    <g transform="scale(-1,1) translate(-14,0)">
+      <path d="M7 1.75C6.53587 1.75 6.09075 1.93437 5.76256 2.26256C5.43437 2.59075 5.25 3.03587 5.25 3.5M5.25 3.5V10.5M5.25 3.5C5.25 3.03587 5.06563 2.59075 4.73744 2.26256C4.40925 1.93437 3.96413 1.75 3.5 1.75M5.25 10.5C5.25 10.9641 5.43437 11.4092 5.76256 11.7374C6.09075 12.0656 6.53587 12.25 7 12.25M5.25 10.5C5.25 10.9641 5.06563 11.4092 4.73744 11.7374C4.40925 12.0656 3.96413 12.25 3.5 12.25M7.58333 4.08333H11.6667C11.8214 4.08333 11.9697 4.14479 12.0791 4.25419C12.1885 4.36358 12.25 4.51196 12.25 4.66667V9.33333C12.25 9.48804 12.1885 9.63642 12.0791 9.74581C11.9697 9.85521 11.8214 9.91667 11.6667 9.91667H7.58333M2.91667 4.08333H2.33333C2.17862 4.08333 2.03025 4.14479 1.92085 4.25419C1.81146 4.36358 1.75 4.51196 1.75 4.66667V9.33333C1.75 9.48804 1.81146 9.63642 1.92085 9.74581C2.03025 9.85521 2.17862 9.91667 2.33333 9.91667H2.91667M9.91667 7H9.9225M7.58333 7H7.58917"></path>
+    </g>
+  </svg>
+);
+
+// Pencil glyph used for "Edit View" (node 303:2052).
 export const PencilIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2.29033 10.1532C2.31409 9.93925 2.32598 9.83231 2.35834 9.73236C2.38706 9.64363 2.42763 9.55924 2.47896 9.48138C2.53681 9.39363 2.61291 9.31758 2.76511 9.16537L9.59769 2.33279C10.1692 1.76131 11.0957 1.76131 11.6672 2.33279C12.2387 2.90426 12.2387 3.8308 11.6672 4.40228L4.8346 11.2349C4.6824 11.3871 4.6063 11.4631 4.51857 11.521C4.44074 11.5723 4.35632 11.6129 4.26763 11.6416C4.16764 11.674 4.06068 11.6859 3.84675 11.7097L2.09577 11.9042L2.29033 10.1532Z"></path>
   </svg>
 );
 
-export const SlidersIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="4" y1="21" x2="4" y2="14"></line>
-    <line x1="4" y1="10" x2="4" y2="3"></line>
-    <line x1="12" y1="21" x2="12" y2="12"></line>
-    <line x1="12" y1="8" x2="12" y2="3"></line>
-    <line x1="20" y1="21" x2="20" y2="16"></line>
-    <line x1="20" y1="12" x2="20" y2="3"></line>
-    <line x1="1" y1="14" x2="7" y2="14"></line>
-    <line x1="9" y1="8" x2="15" y2="8"></line>
-    <line x1="17" y1="16" x2="23" y2="16"></line>
-  </svg>
-);
-
+// Trash glyph used for "Delete View" (node 303:2052).
 export const TrashIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="3 6 5 6 21 6"></polyline>
-    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5.25 1.75H8.75M1.75 3.5H12.25M11.0833 3.5L10.6742 9.63626C10.6129 10.5569 10.5822 11.0172 10.3833 11.3663C10.2083 11.6736 9.9442 11.9206 9.62599 12.0748C9.2645 12.25 8.80314 12.25 7.88042 12.25H6.11957C5.19686 12.25 4.73552 12.25 4.37403 12.0748C4.05578 11.9206 3.79172 11.6736 3.61665 11.3663C3.41781 11.0172 3.38712 10.5569 3.32575 9.63626L2.91667 3.5"></path>
   </svg>
 );
 

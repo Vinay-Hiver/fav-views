@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { MAX_FAVOURITES } from '../data/dummyViews';
 import {
   BackIcon, SearchIcon, StarIcon, DragHandleIcon, ViewTypeIcon, KebabIcon,
-  UsersStarIcon, PencilIcon, SlidersIcon, TrashIcon, HeartCircleIcon,
+  UsersStarIcon, RenameIcon, PencilIcon, TrashIcon, HeartCircleIcon,
 } from './viewIcons';
 
 // 1x1 transparent image used to suppress the browser's native drag ghost.
@@ -17,10 +17,11 @@ if (EMPTY_DRAG_IMAGE) {
 // reported up via onChange so the home nav (favourite views) stays in sync.
 const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsData, onChange, activeRole }) => {
   const [search, setSearch] = React.useState('');
-  const [capMessage, setCapMessage] = React.useState(false);
   const [draggedId, setDraggedId] = React.useState(null);
   const [menuOpenFor, setMenuOpenFor] = React.useState(null);
   const [menuPosition, setMenuPosition] = React.useState({ top: 0, left: 0 });
+  const [starTooltipFor, setStarTooltipFor] = React.useState(null);
+  const [starTooltipPosition, setStarTooltipPosition] = React.useState({ top: 0, left: 0 });
 
   const views = viewsData?.views || [];
   // Admin and Agent each have their own personal Favourites for this inbox.
@@ -83,11 +84,9 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
 
   const toggleFavourite = (id) => {
     const isFavourited = favouriteIds.includes(id);
-    if (!isFavourited && favouriteIds.length >= MAX_FAVOURITES) {
-      setCapMessage(true);
-      return;
-    }
-    setCapMessage(false);
+    // At the cap, clicking an unfavourited star is a no-op — the hover
+    // tooltip already explains why, nothing else needs to happen.
+    if (!isFavourited && favouriteIds.length >= MAX_FAVOURITES) return;
     const nextFavouriteIds = isFavourited
       ? favouriteIds.filter((favId) => favId !== id)
       : [...favouriteIds, id];
@@ -99,8 +98,10 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
   };
 
   // Admin-only: move a view between "All Views" and "Team Favourites".
+  // Capped at MAX_FAVOURITES too — same limit as personal favourites.
   const toggleTeamFavourite = (id) => {
     const isTeamFavourited = teamFavouriteIds.includes(id);
+    if (!isTeamFavourited && teamFavouriteIds.length >= MAX_FAVOURITES) return;
     const nextTeamFavouriteIds = isTeamFavourited
       ? teamFavouriteIds.filter((favId) => favId !== id)
       : [...teamFavouriteIds, id];
@@ -157,6 +158,12 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
   const rowIcon = (view) =>
     teamFavouriteIds.includes(view.id) ? <HeartCircleIcon /> : <ViewTypeIcon icon={view.icon} />;
 
+  const starTooltip = (view) => {
+    if (favouriteIds.includes(view.id)) return 'Remove from favorites';
+    if (favouriteIds.length >= MAX_FAVOURITES) return 'You can add up to 5 favorites';
+    return 'Add to favorites';
+  };
+
   const renderRow = (view, { draggable = false } = {}) => (
     <div
       className={`view-row ${isSelected(view) ? 'selected' : ''} ${draggable ? 'draggable-row' : ''} ${draggedId === view.id ? 'is-dragging' : ''}`}
@@ -204,17 +211,38 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
         <span className="view-row-name">{view.name}</span>
       </div>
       <div className="view-row-meta">
-        <button
-          type="button"
-          className="view-star-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleFavourite(view.id);
+        <span
+          className="view-star-wrap"
+          onMouseEnter={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setStarTooltipPosition({ top: rect.top - 6, left: rect.left + rect.width / 2 });
+            setStarTooltipFor(view.id);
           }}
-          aria-label={favouriteIds.includes(view.id) ? 'Remove from favourites' : 'Add to favourites'}
+          onMouseLeave={() => setStarTooltipFor(null)}
         >
-          <StarIcon filled={favouriteIds.includes(view.id)} />
-        </button>
+          <button
+            type="button"
+            className="view-star-btn"
+            disabled={!favouriteIds.includes(view.id) && favouriteIds.length >= MAX_FAVOURITES}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFavourite(view.id);
+            }}
+            aria-label={favouriteIds.includes(view.id) ? 'Remove from favourites' : 'Add to favourites'}
+          >
+            <StarIcon filled={favouriteIds.includes(view.id)} />
+          </button>
+          {starTooltipFor === view.id &&
+            createPortal(
+              <span
+                className="view-star-tooltip"
+                style={{ top: starTooltipPosition.top, left: starTooltipPosition.left }}
+              >
+                {starTooltip(view)}
+              </span>,
+              document.body
+            )}
+        </span>
         {view.type === 'custom' && (activeRole === 'Admin' || !teamFavouriteIds.includes(view.id)) ? (
           <div className="view-kebab-wrap">
             <span className="view-row-count-under">{view.count}</span>
@@ -243,25 +271,41 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
                   ref={menuRef}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {activeRole === 'Admin' && (
-                    <>
-                      <button
-                        type="button"
-                        className="view-kebab-menu-item"
-                        onClick={() => toggleTeamFavourite(view.id)}
-                      >
-                        <UsersStarIcon />
-                        <span>{teamFavouriteIds.includes(view.id) ? 'Remove from Team Favourites' : 'Add to Team Favourites'}</span>
-                      </button>
-                      <div className="view-kebab-menu-divider" />
-                    </>
-                  )}
+                  {activeRole === 'Admin' && (() => {
+                    const isTeamFavourited = teamFavouriteIds.includes(view.id);
+                    const isTeamCapped = !isTeamFavourited && teamFavouriteIds.length >= MAX_FAVOURITES;
+                    return (
+                      <>
+                        <button
+                          type="button"
+                          className={`view-kebab-menu-item view-kebab-menu-item-subtitled ${isTeamCapped ? 'view-kebab-menu-item-disabled' : ''}`}
+                          disabled={isTeamCapped}
+                          onClick={() => toggleTeamFavourite(view.id)}
+                        >
+                          <UsersStarIcon />
+                          <span className="view-kebab-menu-item-text">
+                            <span className="view-kebab-menu-item-label">
+                              {isTeamFavourited ? 'Remove from team favourites' : 'Add to team favourites'}
+                            </span>
+                            <span className={`view-kebab-menu-item-subtitle ${isTeamCapped ? 'view-kebab-menu-item-subtitle-warning' : ''}`}>
+                              {isTeamCapped
+                                ? 'You can add up to 5 team favourites'
+                                : isTeamFavourited
+                                ? 'Remove this view from your agents’ sidebar'
+                                : 'Add this view to your agents’ sidebar'}
+                            </span>
+                          </span>
+                        </button>
+                        <div className="view-kebab-menu-divider" />
+                      </>
+                    );
+                  })()}
                   <button type="button" className="view-kebab-menu-item" onClick={() => setMenuOpenFor(null)}>
-                    <PencilIcon />
+                    <RenameIcon />
                     <span>Rename View</span>
                   </button>
                   <button type="button" className="view-kebab-menu-item" onClick={() => setMenuOpenFor(null)}>
-                    <SlidersIcon />
+                    <PencilIcon />
                     <span>Edit View</span>
                   </button>
                   <button type="button" className="view-kebab-menu-item" onClick={() => setMenuOpenFor(null)}>
@@ -303,10 +347,6 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
             />
           </div>
         </div>
-
-        {capMessage && (
-          <div className="favourites-cap-message">You can add up to five favourites</div>
-        )}
 
         <div className="section-title margin-top">Favourites</div>
         <div className="nav-group view-list">

@@ -406,15 +406,6 @@
   flex-direction: column;
 }
 
-.favourites-cap-message {
-  margin: 8px 8px 0;
-  padding: 6px 8px;
-  font-size: 12px;
-  color: var(--errorTextSubtle, #dc2626);
-  background: rgba(220, 38, 38, 0.08);
-  border-radius: 6px;
-}
-
 .view-list {
   gap: 2px;
 }
@@ -550,6 +541,35 @@
   opacity: 1;
 }
 
+.view-star-btn:disabled {
+  cursor: default;
+}
+
+.view-star-wrap {
+  position: relative;
+  display: flex;
+}
+
+/* Tooltip design from Figma (node 303:3111): dark slate bubble, white
+   12px text. Portaled to <body> (position: fixed, top/left set inline by
+   AllViewsPanel) so it can escape the sidebar's clipped scroll container
+   instead of getting cut off at the panel edge. */
+.view-star-tooltip {
+  position: fixed;
+  transform: translate(-50%, -100%);
+  background-color: var(--slateSurfaceDark600, #475569);
+  color: var(--slateSurfaceWhite, #ffffff);
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 400;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
 .view-row-count {
   font-size: 14px;
   color: var(--slateTextTitle);
@@ -635,11 +655,11 @@
   position: fixed;
   z-index: 1000;
   background-color: var(--slateSurfaceWhite, #ffffff);
-  border: 1px solid var(--slateBorderLight);
+  border: 0.5px solid var(--slateBorderLight);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  box-shadow: 0px 8px 8px var(--slateTextCaption, #cbd5e1);
   padding: 4px;
-  min-width: 200px;
+  min-width: 240px;
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -648,15 +668,16 @@
 .view-kebab-menu-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 7px 8px;
+  gap: 6px;
+  padding: 6px 8px;
   border: none;
   background: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-family: inherit;
   font-size: 14px;
-  color: var(--slateTextTitle);
+  line-height: 20px;
+  color: var(--slateTextBody, #334155);
   text-align: left;
   white-space: nowrap;
 }
@@ -667,7 +688,55 @@
 
 .view-kebab-menu-item svg {
   flex-shrink: 0;
-  color: var(--slateIconsSubtle);
+  color: var(--slateTextBody, #334155);
+  padding: 3px;
+  box-sizing: content-box;
+}
+
+.view-kebab-menu-item-subtitled {
+  align-items: flex-start;
+}
+
+.view-kebab-menu-item-subtitled svg {
+  margin-top: 3px;
+}
+
+.view-kebab-menu-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: normal;
+}
+
+.view-kebab-menu-item-label {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--slateTextBody, #334155);
+}
+
+.view-kebab-menu-item-subtitle {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--slateTextSubtle, #64758b);
+}
+
+.view-kebab-menu-item-subtitle-warning {
+  color: var(--warningTextBody, #933e0f);
+}
+
+/* At the 5 team-favourite cap: greyed out label/icon, no hover, no click —
+   the warning subtitle above already explains why. */
+.view-kebab-menu-item-disabled {
+  cursor: default;
+}
+
+.view-kebab-menu-item-disabled:hover {
+  background-color: transparent;
+}
+
+.view-kebab-menu-item-disabled svg,
+.view-kebab-menu-item-disabled .view-kebab-menu-item-label {
+  color: var(--slateTextDisabled, #94a3b8);
 }
 
 .view-kebab-menu-divider {
