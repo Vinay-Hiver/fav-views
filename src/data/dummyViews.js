@@ -2,8 +2,12 @@
 // `views` holds every View in the inbox (system + custom), in catalogue order.
 // `favouriteIds` is keyed by role — Admin and Agent each have their own
 // personal favourites, kept entirely separate — with each value the ordered
-// list of favourited View ids for that inbox (max 5). This order drives both
-// the All Views "Favourites" group and the home screen nav.
+// list of favourited View ids for that inbox (max 5 personal, separately
+// capped from `teamFavouriteIds`).
+// `sidebarOrder` (also keyed by role) is the single merged, drag-reorderable
+// order of every id currently in favouriteIds[role] or teamFavouriteIds —
+// personal and Team Favourites can be freely reordered against each other
+// in this one list. The first 5 entries are what shows in the home nav.
 export const INITIAL_VIEWS_BY_INBOX = {
   Support: {
     views: [
@@ -27,6 +31,10 @@ export const INITIAL_VIEWS_BY_INBOX = {
       Admin: ['mine', 'unassigned', 'pending', 'closed'],
       Agent: ['mine', 'unassigned', 'closed'],
     },
+    sidebarOrder: {
+      Admin: ['mine', 'unassigned', 'pending', 'closed'],
+      Agent: ['mine', 'unassigned', 'closed'],
+    },
     teamFavouriteIds: [],
   },
   Finance: {
@@ -44,6 +52,7 @@ export const INITIAL_VIEWS_BY_INBOX = {
       { id: 'custom-5', name: 'Chargebacks', type: 'custom', icon: 'layers', count: 1 },
     ],
     favouriteIds: { Admin: ['mine'], Agent: ['mine'] },
+    sidebarOrder: { Admin: ['mine'], Agent: ['mine'] },
     teamFavouriteIds: [],
   },
   Shipping: {
@@ -61,6 +70,7 @@ export const INITIAL_VIEWS_BY_INBOX = {
       { id: 'custom-5', name: 'Express', type: 'custom', icon: 'layers', count: 8 },
     ],
     favouriteIds: { Admin: ['mine'], Agent: ['mine'] },
+    sidebarOrder: { Admin: ['mine'], Agent: ['mine'] },
     teamFavouriteIds: [],
   },
   Refund: {
@@ -76,6 +86,7 @@ export const INITIAL_VIEWS_BY_INBOX = {
       { id: 'custom-3', name: 'High Value', type: 'custom', icon: 'layers', count: 3 },
     ],
     favouriteIds: { Admin: ['mine'], Agent: ['mine'] },
+    sidebarOrder: { Admin: ['mine'], Agent: ['mine'] },
     teamFavouriteIds: [],
   },
   'IT Support': {
@@ -92,6 +103,7 @@ export const INITIAL_VIEWS_BY_INBOX = {
       { id: 'custom-4', name: 'VPN', type: 'custom', icon: 'layers', count: 4 },
     ],
     favouriteIds: { Admin: ['mine'], Agent: ['mine'] },
+    sidebarOrder: { Admin: ['mine'], Agent: ['mine'] },
     teamFavouriteIds: [],
   },
 };

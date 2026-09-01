@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { MAX_FAVOURITES } from '../data/dummyViews';
 import {
   BackIcon, SearchIcon, StarIcon, DragHandleIcon, ViewTypeIcon, KebabIcon,
-  UsersStarIcon, RenameIcon, PencilIcon, TrashIcon, HeartCircleIcon,
+  UsersStarIcon, RenameIcon, PencilIcon, TrashIcon, HeartCircleIcon, TeamFavRowIcon,
 } from './viewIcons';
 
 // 1x1 transparent image used to suppress the browser's native drag ghost.
@@ -28,6 +28,10 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
   const favouriteIdsByRole = viewsData?.favouriteIds || {};
   const favouriteIds = favouriteIdsByRole[activeRole] || [];
   const teamFavouriteIds = viewsData?.teamFavouriteIds || [];
+  // The single merged, drag-reorderable order of personal + Team Favourites
+  // for this role — see the comment in data/dummyViews.js.
+  const sidebarOrderByRole = viewsData?.sidebarOrder || {};
+  const sidebarOrder = sidebarOrderByRole[activeRole] || favouriteIds;
 
   // Close the kebab menu on any click outside of it.
   const menuRef = React.useRef(null);
@@ -55,11 +59,11 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
   const prevRectsRef = React.useRef({});
   React.useLayoutEffect(() => {
     const nextRects = {};
-    favouriteIds.forEach((id) => {
+    sidebarOrder.forEach((id) => {
       const el = rowRefs.current[id];
       if (el) nextRects[id] = el.getBoundingClientRect();
     });
-    favouriteIds.forEach((id) => {
+    sidebarOrder.forEach((id) => {
       const prev = prevRectsRef.current[id];
       const next = nextRects[id];
       const el = rowRefs.current[id];
@@ -78,7 +82,7 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
       }
     });
     prevRectsRef.current = nextRects;
-  }, [favouriteIds.join('|')]);
+  }, [sidebarOrder.join('|')]);
 
   if (!viewsData) return null;
 
@@ -90,56 +94,72 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
     const nextFavouriteIds = isFavourited
       ? favouriteIds.filter((favId) => favId !== id)
       : [...favouriteIds, id];
+    const nextOrder = isFavourited
+      ? sidebarOrder.filter((favId) => favId !== id)
+      : sidebarOrder.includes(id) ? sidebarOrder : [...sidebarOrder, id];
     onChange({
       views,
       favouriteIds: { ...favouriteIdsByRole, [activeRole]: nextFavouriteIds },
+      sidebarOrder: { ...sidebarOrderByRole, [activeRole]: nextOrder },
       teamFavouriteIds,
     });
   };
 
   // Admin-only: move a view between "All Views" and "Team Favourites".
-  // Capped at MAX_FAVOURITES too — same limit as personal favourites.
+  // Capped at MAX_FAVOURITES too — same limit as personal favourites. A
+  // Team Favourite is shared across every role, so it's added to (or
+  // removed from) both roles' sidebarOrder at once.
   const toggleTeamFavourite = (id) => {
     const isTeamFavourited = teamFavouriteIds.includes(id);
     if (!isTeamFavourited && teamFavouriteIds.length >= MAX_FAVOURITES) return;
     const nextTeamFavouriteIds = isTeamFavourited
       ? teamFavouriteIds.filter((favId) => favId !== id)
       : [...teamFavouriteIds, id];
-    onChange({ views, favouriteIds: favouriteIdsByRole, teamFavouriteIds: nextTeamFavouriteIds });
+    const nextSidebarOrder = { ...sidebarOrderByRole };
+    ['Admin', 'Agent'].forEach((role) => {
+      const roleOrder = sidebarOrderByRole[role] || favouriteIdsByRole[role] || [];
+      nextSidebarOrder[role] = isTeamFavourited
+        ? roleOrder.filter((favId) => favId !== id)
+        : roleOrder.includes(id) ? roleOrder : [...roleOrder, id];
+    });
+    onChange({
+      views,
+      favouriteIds: favouriteIdsByRole,
+      sidebarOrder: nextSidebarOrder,
+      teamFavouriteIds: nextTeamFavouriteIds,
+    });
     setMenuOpenFor(null);
   };
 
-  // Live-reorders while dragging over another favourite row: dropping the
-  // dragged card before/after the hovered row (based on cursor position),
-  // so the other rows slide out of the way as you move — no separate drop
-  // target needed.
+  // Live-reorders while dragging over another row (personal favourite or
+  // Team Favourite, mixed freely) — dropping the dragged card before/after
+  // the hovered row so the other rows slide out of the way as you move.
   const reorderOverRow = (draggedViewId, targetViewId, placeAfter) => {
     if (draggedViewId === targetViewId) return;
-    const fromIndex = favouriteIds.indexOf(draggedViewId);
-    let toIndex = favouriteIds.indexOf(targetViewId);
+    const fromIndex = sidebarOrder.indexOf(draggedViewId);
+    let toIndex = sidebarOrder.indexOf(targetViewId);
     if (fromIndex === -1 || toIndex === -1) return;
     if (placeAfter) toIndex += 1;
     if (fromIndex < toIndex) toIndex -= 1;
     if (fromIndex === toIndex) return;
-    const next = [...favouriteIds];
+    const next = [...sidebarOrder];
     next.splice(fromIndex, 1);
     next.splice(toIndex, 0, draggedViewId);
     onChange({
       views,
-      favouriteIds: { ...favouriteIdsByRole, [activeRole]: next },
+      favouriteIds: favouriteIdsByRole,
+      sidebarOrder: { ...sidebarOrderByRole, [activeRole]: next },
       teamFavouriteIds,
     });
   };
 
   const query = search.toLowerCase();
-  const favourites = favouriteIds
+  // One merged, drag-reorderable list — personal favourites and Team
+  // Favourites interleaved freely in whatever order the user's arranged
+  // them. Its first 5 entries are what shows in the home nav.
+  const mergedFavourites = sidebarOrder
     .map((id) => viewsById[id])
     .filter((v) => v && v.name.toLowerCase().includes(query));
-  // A view that's both team- and personally-favourited only shows once, in
-  // Favourites — Team Favourites is where it "lives" until someone stars it.
-  const teamFavourites = teamFavouriteIds
-    .map((id) => viewsById[id])
-    .filter((v) => v && !favouriteIds.includes(v.id) && v.name.toLowerCase().includes(query));
   const others = views.filter(
     (v) => !favouriteIds.includes(v.id) && !teamFavouriteIds.includes(v.id) && v.name.toLowerCase().includes(query)
   );
@@ -149,11 +169,11 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
 
   const canDrag = search.trim() === '';
 
-  // A view that's a Team Favourite always shows the heart-circle icon, even
-  // after someone also personally favourites it and it moves up into the
-  // Favourites list — it stays team-pinned either way.
+  // A view that's a Team Favourite swaps its row icon to the users-plus
+  // glyph too, on top of the separate circle-heart indicator next to the
+  // star/kebab.
   const rowIcon = (view) =>
-    teamFavouriteIds.includes(view.id) ? <HeartCircleIcon /> : <ViewTypeIcon icon={view.icon} />;
+    teamFavouriteIds.includes(view.id) ? <TeamFavRowIcon /> : <ViewTypeIcon icon={view.icon} />;
 
   const starTooltip = (view) => {
     if (favouriteIds.includes(view.id)) return 'Remove from favorites';
@@ -208,38 +228,73 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
         <span className="view-row-name">{view.name}</span>
       </div>
       <div className="view-row-meta">
-        <span
-          className="view-star-wrap"
-          onMouseEnter={(e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            setStarTooltipPosition({ top: rect.top - 6, left: rect.left + rect.width / 2 });
-            setStarTooltipFor(view.id);
-          }}
-          onMouseLeave={() => setStarTooltipFor(null)}
-        >
-          <button
-            type="button"
-            className="view-star-btn"
-            disabled={!favouriteIds.includes(view.id) && favouriteIds.length >= MAX_FAVOURITES}
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleFavourite(view.id);
+        {teamFavouriteIds.includes(view.id) ? (
+          // Team Favourites are pinned by the Admin and can't be personally
+          // starred/unstarred by an Agent, so no star toggle here at all —
+          // just the indicator marking it as team-pinned.
+          <span
+            className={`view-team-fav-indicator ${activeRole === 'Agent' ? 'agent-variant' : ''}`}
+            aria-label="Team favourite"
+            onMouseEnter={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setStarTooltipPosition({ top: rect.top - 6, left: rect.left + rect.width / 2 });
+              setStarTooltipFor(view.id);
             }}
-            aria-label={favouriteIds.includes(view.id) ? 'Remove from favourites' : 'Add to favourites'}
+            onMouseLeave={() => setStarTooltipFor(null)}
           >
-            <StarIcon filled={favouriteIds.includes(view.id)} />
-          </button>
-          {starTooltipFor === view.id &&
-            createPortal(
-              <span
-                className="view-star-tooltip"
-                style={{ top: starTooltipPosition.top, left: starTooltipPosition.left }}
-              >
-                {starTooltip(view)}
-              </span>,
-              document.body
-            )}
-        </span>
+            <HeartCircleIcon />
+            {starTooltipFor === view.id &&
+              createPortal(
+                <span
+                  className={`view-star-tooltip ${activeRole === 'Agent' ? 'view-star-tooltip-multiline' : ''}`}
+                  style={{ top: starTooltipPosition.top, left: starTooltipPosition.left }}
+                >
+                  {activeRole === 'Agent' ? (
+                    <>
+                      <span>View marked as team favorite</span>
+                      <span>by your admin</span>
+                    </>
+                  ) : (
+                    'Marked as team favorite'
+                  )}
+                </span>,
+                document.body
+              )}
+          </span>
+        ) : (
+          <span
+            className="view-star-wrap"
+            onMouseEnter={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setStarTooltipPosition({ top: rect.top - 6, left: rect.left + rect.width / 2 });
+              setStarTooltipFor(view.id);
+            }}
+            onMouseLeave={() => setStarTooltipFor(null)}
+          >
+            <button
+              type="button"
+              className="view-star-btn"
+              disabled={!favouriteIds.includes(view.id) && favouriteIds.length >= MAX_FAVOURITES}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFavourite(view.id);
+              }}
+              aria-label={favouriteIds.includes(view.id) ? 'Remove from favourites' : 'Add to favourites'}
+            >
+              <StarIcon filled={favouriteIds.includes(view.id)} />
+            </button>
+            {starTooltipFor === view.id &&
+              createPortal(
+                <span
+                  className="view-star-tooltip"
+                  style={{ top: starTooltipPosition.top, left: starTooltipPosition.left }}
+                >
+                  {starTooltip(view)}
+                </span>,
+                document.body
+              )}
+          </span>
+        )}
         {view.type === 'custom' && (activeRole === 'Admin' || !teamFavouriteIds.includes(view.id)) ? (
           <div className="view-kebab-wrap">
             <span className="view-row-count-under">{view.count}</span>
@@ -345,22 +400,14 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
           </div>
         </div>
 
-        <div className="section-title margin-top">Favourites</div>
+        <div className="section-title margin-top">My Favorites</div>
         <div className="nav-group view-list">
-          {favourites.length > 0 ? (
-            favourites.map((view) => renderRow(view, { draggable: true }))
+          {mergedFavourites.length > 0 ? (
+            mergedFavourites.map((view) => renderRow(view, { draggable: true }))
           ) : (
-            <div className="view-list-empty">No favourites yet — star a view below</div>
+            <div className="view-list-empty">There are no favourite views.</div>
           )}
         </div>
-
-        {/* No empty state here at all — Team Favourites only ever appears
-            once there's actually something in it to show. */}
-        {teamFavourites.length > 0 && (
-          <div className="nav-group view-list">
-            {teamFavourites.map((view) => renderRow(view))}
-          </div>
-        )}
 
         <div className="view-list-divider" />
 

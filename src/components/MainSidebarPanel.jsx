@@ -1,7 +1,7 @@
 import React from 'react';
 import AllViewsPanel from './AllViewsPanel';
-import { ViewTypeIcon, HeartCircleIcon } from './viewIcons';
-import { INITIAL_VIEWS_BY_INBOX } from '../data/dummyViews';
+import { ViewTypeIcon, TeamFavRowIcon } from './viewIcons';
+import { INITIAL_VIEWS_BY_INBOX, MAX_FAVOURITES } from '../data/dummyViews';
 
 // Icons
 import allMailIcon from '../assets/icons/all-mail.svg';
@@ -107,15 +107,21 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
   };
 
   const renderNestedItems = (inboxName) => {
-    const { views, favouriteIds: favouriteIdsByRole, teamFavouriteIds } = viewsByInbox[inboxName];
-    const favouriteIds = favouriteIdsByRole[activeRole] || [];
+    const { views, sidebarOrder: sidebarOrderByRole, favouriteIds: favouriteIdsByRole, teamFavouriteIds } = viewsByInbox[inboxName];
+    const sidebarOrder = sidebarOrderByRole[activeRole] || favouriteIdsByRole[activeRole] || [];
     const viewsById = {};
     views.forEach((v) => { viewsById[v.id] = v; });
-    const favouritedViews = favouriteIds.map((id) => viewsById[id]).filter(Boolean);
+
+    // What shows in the sidebar isn't "your favourites" anymore — it's the
+    // first 5 entries of the merged, drag-reorderable order (personal
+    // favourites and Team Favourites interleaved, as arranged in All
+    // Views). An Agent can't remove a Team Favourite, so with zero personal
+    // favourites the sidebar simply shows the top 5 Team Favourites.
+    const sidebarViews = sidebarOrder.map((id) => viewsById[id]).filter(Boolean).slice(0, MAX_FAVOURITES);
 
     return (
       <div className="nav-group-nested">
-        {favouritedViews.map((view) => (
+        {sidebarViews.map((view) => (
           <div
             key={view.id}
             className={`nav-item ${activeFilter.inbox === inboxName && activeFilter.type === view.name ? 'active' : ''}`}
@@ -123,11 +129,13 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
           >
             <div className="nav-content">
               <span className="item-icon">
-                {teamFavouriteIds.includes(view.id) ? <HeartCircleIcon /> : <ViewTypeIcon icon={view.icon} />}
+                {teamFavouriteIds.includes(view.id) ? <TeamFavRowIcon /> : <ViewTypeIcon icon={view.icon} />}
               </span>
               <span>{view.name}</span>
             </div>
-            <span className="count">{view.count}</span>
+            <div className="nav-item-meta">
+              <span className="count">{view.count}</span>
+            </div>
           </div>
         ))}
 
