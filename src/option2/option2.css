@@ -1,0 +1,26 @@
+/* Option 2 specific overrides — kept separate from Sidebar.css so nothing
+   here touches the live app's styles. */
+
+/* Divider between "In your sidebar" and "Favourites" — dashed instead of
+   solid, per the Figma spec, to distinguish it from the divider before
+   "All Views". */
+.view-list-divider-dotted {
+  border-top-style: dashed;
+}
+
+/* The floating clone @dnd-kit renders under the cursor while dragging. */
+.drag-overlay-row {
+  width: 224px; /* matches the All Views panel's content width */
+  background-color: var(--slateSurfaceWhite, #ffffff);
+  border-radius: 6px;
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.16), 0 2px 4px rgba(15, 23, 42, 0.08);
+  cursor: grabbing;
+}
+
+.drag-overlay-row .icon-drag-handle {
+  opacity: 1 !important;
+}
+
+.drag-overlay-row .icon-default {
+  opacity: 0 !important;
+}

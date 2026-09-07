@@ -599,7 +599,7 @@
   transform: translate(-50%, -100%);
   background-color: var(--slateSurfaceDark600, #475569);
   color: var(--slateSurfaceWhite, #ffffff);
-  padding: 6px 8px;
+  padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
   line-height: 18px;

@@ -1,0 +1,40 @@
+/* Option 1 specific overrides — kept separate from Sidebar.css so nothing
+   here touches the live app's styles. */
+
+/* The floating clone @dnd-kit renders under the cursor while dragging. */
+.drag-overlay-row {
+  width: 224px; /* matches the All Views panel's content width */
+  background-color: var(--slateSurfaceWhite, #ffffff);
+  border-radius: 6px;
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.16), 0 2px 4px rgba(15, 23, 42, 0.08);
+  cursor: grabbing;
+}
+
+.drag-overlay-row .icon-drag-handle {
+  opacity: 1 !important;
+}
+
+.drag-overlay-row .icon-default {
+  opacity: 0 !important;
+}
+
+/* Non-draggable rows (All Views section) still need the team-fav icon
+   centred inside .view-row-icon the same way .icon-default is. */
+.icon-team-fav-static {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Team-fav row-icon tooltip sits to the right of the icon instead of
+   above it, unlike the shared .view-star-tooltip default. */
+.view-star-tooltip-right {
+  transform: translate(0, -50%);
+}
+
+.view-star-tooltip-right.view-star-tooltip-multiline {
+  align-items: flex-start;
+  text-align: left;
+}
