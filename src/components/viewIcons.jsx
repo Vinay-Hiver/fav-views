@@ -63,6 +63,15 @@ export const HeartCircleIcon = () => (
   </svg>
 );
 
+// Outlined-square star badge (node 468:62) — the icon shown wherever a
+// view is marked as a Team Favourite.
+export const TeamFavouriteIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <path d="M6.66667 10H5.33333C4.09082 10 3.46957 10 2.97951 10.203C2.3261 10.4736 1.80697 10.9928 1.53632 11.6462C1.33333 12.1362 1.33333 12.7575 1.33333 14M10.3333 2.19384C11.3106 2.58943 12 3.54754 12 4.66667C12 5.78579 11.3106 6.7439 10.3333 7.13949M9 4.66667C9 6.13943 7.80609 7.33333 6.33333 7.33333C4.86057 7.33333 3.66667 6.13943 3.66667 4.66667C3.66667 3.19391 4.86057 2 6.33333 2C7.80609 2 9 3.19391 9 4.66667Z" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"></path>
+    <path d="M12.1374 8.66667L13.0039 10.422L14.9415 10.7052L13.5394 12.0708L13.8703 14L12.1374 13.0887L10.4045 14L10.7354 12.0708L9.33333 10.7052L11.2709 10.422L12.1374 8.66667Z" fill="currentColor" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round"></path>
+  </svg>
+);
+
 // "users-plus" glyph (node 305:4440), sized for a 14px row icon slot —
 // swapped in for a view's leading icon while it's a Team Favourite.
 export const TeamFavRowIcon = () => (

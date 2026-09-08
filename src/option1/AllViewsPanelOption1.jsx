@@ -7,7 +7,7 @@ import { MAX_FAVOURITES } from '../data/dummyViews';
 import './option1.css';
 import {
   BackIcon, SearchIcon, StarIcon, DragHandleIcon, ViewTypeIcon, KebabIcon,
-  UsersStarIcon, HeartCircleIcon, RenameIcon, PencilIcon, TrashIcon,
+  UsersStarIcon, TeamFavouriteIcon, RenameIcon, PencilIcon, TrashIcon,
 } from '../components/viewIcons';
 
 // Option 1 spec — deliberately simpler than the live app's AllViewsPanel:
@@ -124,10 +124,10 @@ const AllViewsPanelOption1 = ({ inboxName, onBack, activeFilter, onFilterChange,
   };
 
   // The only visual effect of a Team Favourite: swap the leading icon.
-  // HeartCircleIcon already uses fill="currentColor", so it automatically
+  // TeamFavouriteIcon already uses fill="currentColor", so it automatically
   // takes on whatever colour the row/selected state gives any other icon.
   const rowIcon = (view) =>
-    teamFavouriteIds.includes(view.id) ? <HeartCircleIcon /> : <ViewTypeIcon icon={view.icon} />;
+    teamFavouriteIds.includes(view.id) ? <TeamFavouriteIcon /> : <ViewTypeIcon icon={view.icon} />;
 
   // Hover handlers for the team-favourite row icon, shown only once a view
   // is marked as a team favourite — mirrors the live app's tooltip copy.

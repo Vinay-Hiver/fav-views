@@ -1,6 +1,6 @@
 import React from 'react';
 import AllViewsPanelOption1 from './AllViewsPanelOption1';
-import { ViewTypeIcon, HeartCircleIcon } from '../components/viewIcons';
+import { ViewTypeIcon, TeamFavouriteIcon } from '../components/viewIcons';
 import { INITIAL_VIEWS_BY_INBOX } from '../data/dummyViews';
 
 // Icons (identical assets to the live app's MainSidebarPanel)
@@ -98,7 +98,7 @@ const MainSidebarPanelOption1 = ({ activeFilter, onFilterChange, activeRole }) =
           >
             <div className="nav-content">
               <span className="item-icon">
-                {teamFavouriteIds.includes(view.id) ? <HeartCircleIcon /> : <ViewTypeIcon icon={view.icon} />}
+                {teamFavouriteIds.includes(view.id) ? <TeamFavouriteIcon /> : <ViewTypeIcon icon={view.icon} />}
               </span>
               <span>{view.name}</span>
             </div>
