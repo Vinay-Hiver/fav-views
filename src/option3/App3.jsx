@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import '../App.css';
-import SidebarOption2 from './SidebarOption2';
+import SidebarOption3 from './SidebarOption3';
 import ConversationList from '../components/ConversationList';
 import ConversationDetail from '../components/ConversationDetail';
 import RightPanel from '../components/RightPanel';
@@ -1058,7 +1058,7 @@ const generateDummyConversations = (inbox, type) => {
   });
 };
 
-function App2() {
+function App3() {
   const [selectedId, setSelectedId] = useState(1);
   const [activeFilter, setActiveFilter] = useState({ inbox: 'Support', type: 'Mine' });
 
@@ -1107,7 +1107,7 @@ function App2() {
         } />
         <Route path="*" element={
           <>
-            <SidebarOption2
+            <SidebarOption3
               activeFilter={activeFilter}
               onFilterChange={setActiveFilter}
               activeRole={activeRole}
@@ -1134,4 +1134,4 @@ function App2() {
   );
 }
 
-export default App2;
+export default App3;

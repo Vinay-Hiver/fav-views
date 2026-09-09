@@ -4,7 +4,6 @@ import SidebarOption1 from './SidebarOption1';
 import ConversationList from '../components/ConversationList';
 import ConversationDetail from '../components/ConversationDetail';
 import RightPanel from '../components/RightPanel';
-import OptionSwitcher from './OptionSwitcher';
 
 // Small dummy dataset — just enough to render a real-looking conversation
 // list/detail alongside the sidebar being explored here.
@@ -83,9 +82,7 @@ function App1() {
   }, [activeFilter.inbox, activeFilter.type]);
 
   return (
-    <div className="app-container">
-      <OptionSwitcher current="option_1" />
-      <SidebarOption1 activeFilter={activeFilter} onFilterChange={setActiveFilter} activeRole={activeRole} />
+    <div className="app-container">      <SidebarOption1 activeFilter={activeFilter} onFilterChange={setActiveFilter} activeRole={activeRole} />
       <ConversationList
         conversations={filteredConversations}
         selectedId={selectedId}
