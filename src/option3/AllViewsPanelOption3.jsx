@@ -85,18 +85,27 @@ const AllViewsPanelOption3 = ({ inboxName, onBack, activeFilter, onFilterChange,
 
   const handleDragStart = (event) => setActiveDragId(event.active.id);
 
-  // Favourites is the only reorderable list — Team Favourites isn't
-  // draggable (its order isn't user-controlled, only Admin add/remove via
-  // the kebab).
+  // Favourites is drag-reorderable by everyone (each role has their own
+  // order). Team Favourites is drag-reorderable by Admin only — and since
+  // `teamFavouriteIds` is shared across roles, the Admin's reordering is
+  // what every Agent sees too.
   const handleDragEnd = (event) => {
     const { active, over } = event;
     setActiveDragId(null);
     if (!over || active.id === over.id) return;
-    const fromIndex = favouriteIds.indexOf(active.id);
-    const toIndex = favouriteIds.indexOf(over.id);
-    if (fromIndex === -1 || toIndex === -1) return;
-    const next = arrayMove(favouriteIds, fromIndex, toIndex);
-    onChange({ views, favouriteIds: { ...favouriteIdsByRole, [activeRole]: next }, teamFavouriteIds });
+    if (favouriteIds.includes(active.id)) {
+      const fromIndex = favouriteIds.indexOf(active.id);
+      const toIndex = favouriteIds.indexOf(over.id);
+      if (fromIndex === -1 || toIndex === -1) return;
+      const next = arrayMove(favouriteIds, fromIndex, toIndex);
+      onChange({ views, favouriteIds: { ...favouriteIdsByRole, [activeRole]: next }, teamFavouriteIds });
+    } else if (activeRole === 'Admin' && teamFavouriteIds.includes(active.id)) {
+      const fromIndex = teamFavouriteIds.indexOf(active.id);
+      const toIndex = teamFavouriteIds.indexOf(over.id);
+      if (fromIndex === -1 || toIndex === -1) return;
+      const next = arrayMove(teamFavouriteIds, fromIndex, toIndex);
+      onChange({ views, favouriteIds: favouriteIdsByRole, teamFavouriteIds: next });
+    }
   };
 
   const query = search.toLowerCase();
@@ -312,13 +321,13 @@ const AllViewsPanelOption3 = ({ inboxName, onBack, activeFilter, onFilterChange,
           </div>
         </div>
 
-        <div className="section-title margin-top">Favourites</div>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
+          <div className="section-title margin-top">Favourites</div>
           <SortableContext items={favouriteIds} strategy={verticalListSortingStrategy}>
             <div className="nav-group view-list">
               {favourites.length > 0 ? (
@@ -330,6 +339,73 @@ const AllViewsPanelOption3 = ({ inboxName, onBack, activeFilter, onFilterChange,
               )}
             </div>
           </SortableContext>
+
+          <div className="view-list-divider" />
+
+          <div className="section-title margin-top section-title-with-info">
+            <span>Team Favourites</span>
+            <span
+              className="team-fav-info-icon"
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setTeamFavInfoPosition({ top: rect.top - 6, left: rect.left + rect.width / 2 });
+                setTeamFavInfoTooltip(true);
+              }}
+              onMouseLeave={() => setTeamFavInfoTooltip(false)}
+            >
+              <InfoIcon />
+            </span>
+            {teamFavInfoTooltip &&
+              createPortal(
+                <span
+                  className="view-star-tooltip view-star-tooltip-multiline"
+                  style={{ top: teamFavInfoPosition.top, left: teamFavInfoPosition.left }}
+                >
+                  {activeRole === 'Admin' ? (
+                    <>
+                      <span>Views marked as team favourite</span>
+                      <span>will show up here</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Views marked as favourite</span>
+                      <span>by your admin</span>
+                    </>
+                  )}
+                </span>,
+                document.body
+              )}
+          </div>
+          {activeRole === 'Admin' ? (
+            <SortableContext items={teamFavourites.map((v) => v.id)} strategy={verticalListSortingStrategy}>
+              <div className="nav-group view-list">
+                {teamFavourites.length > 0 ? (
+                  teamFavourites.map((view) => (
+                    <SortableRow key={view.id} view={view} isSelected={isSelected(view)} onSelect={() => onFilterChange?.({ inbox: inboxName, type: view.name })} renderRowBody={renderRowBody} />
+                  ))
+                ) : (
+                  <div className="view-list-empty team-favourites-empty">
+                    {teamFavouritesMovedToFavourites
+                      ? 'All Team Favourites have been added to your Favourites'
+                      : 'No Team Favourites yet.'}
+                  </div>
+                )}
+              </div>
+            </SortableContext>
+          ) : (
+            <div className="nav-group view-list">
+              {teamFavourites.length > 0 ? (
+                teamFavourites.map((view) => renderPlainRow(view))
+              ) : (
+                <div className="view-list-empty team-favourites-empty">
+                  {teamFavouritesMovedToFavourites
+                    ? 'All Team Favourites have been added to your Favourites'
+                    : 'No Team Favourites yet.'}
+                </div>
+              )}
+            </div>
+          )}
+
           {createPortal(
             <DragOverlay dropAnimation={{ duration: 180, easing: 'ease' }}>
               {activeDragId && viewsById[activeDragId] ? (
@@ -341,54 +417,6 @@ const AllViewsPanelOption3 = ({ inboxName, onBack, activeFilter, onFilterChange,
             document.body
           )}
         </DndContext>
-
-        <div className="view-list-divider" />
-
-        <div className="section-title margin-top section-title-with-info">
-          <span>Team Favourites</span>
-          <span
-            className="team-fav-info-icon"
-            onMouseEnter={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setTeamFavInfoPosition({ top: rect.top - 6, left: rect.left + rect.width / 2 });
-              setTeamFavInfoTooltip(true);
-            }}
-            onMouseLeave={() => setTeamFavInfoTooltip(false)}
-          >
-            <InfoIcon />
-          </span>
-          {teamFavInfoTooltip &&
-            createPortal(
-              <span
-                className="view-star-tooltip view-star-tooltip-multiline"
-                style={{ top: teamFavInfoPosition.top, left: teamFavInfoPosition.left }}
-              >
-                {activeRole === 'Admin' ? (
-                  <>
-                    <span>Views marked as team favourite</span>
-                    <span>will show up here</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Views marked as favourite</span>
-                    <span>by your admin</span>
-                  </>
-                )}
-              </span>,
-              document.body
-            )}
-        </div>
-        <div className="nav-group view-list">
-          {teamFavourites.length > 0 ? (
-            teamFavourites.map((view) => renderPlainRow(view))
-          ) : (
-            <div className="view-list-empty team-favourites-empty">
-              {teamFavouritesMovedToFavourites
-                ? 'All Team Favourites have been added to your Favourites'
-                : 'No Team Favourites yet.'}
-            </div>
-          )}
-        </div>
 
         <div className="view-list-divider" />
 
