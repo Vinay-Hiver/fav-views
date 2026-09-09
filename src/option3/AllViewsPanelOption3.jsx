@@ -7,7 +7,7 @@ import { MAX_FAVOURITES } from '../data/dummyViews';
 import './option3.css';
 import {
   BackIcon, SearchIcon, StarIcon, DragHandleIcon, ViewTypeIcon, KebabIcon,
-  UsersStarIcon, RenameIcon, PencilIcon, TrashIcon,
+  UsersStarIcon, RenameIcon, PencilIcon, TrashIcon, InfoIcon,
 } from '../components/viewIcons';
 
 // `viewsData` = { views, favouriteIds, teamFavouriteIds } for the current
@@ -27,6 +27,8 @@ const AllViewsPanelOption3 = ({ inboxName, onBack, activeFilter, onFilterChange,
   const [starTooltipFor, setStarTooltipFor] = React.useState(null);
   const [starTooltipPosition, setStarTooltipPosition] = React.useState({ top: 0, left: 0 });
   const [activeDragId, setActiveDragId] = React.useState(null);
+  const [teamFavInfoTooltip, setTeamFavInfoTooltip] = React.useState(false);
+  const [teamFavInfoPosition, setTeamFavInfoPosition] = React.useState({ top: 0, left: 0 });
 
   const views = viewsData?.views || [];
   // Admin and Agent each have their own personal Favourites for this inbox.
@@ -185,7 +187,13 @@ const AllViewsPanelOption3 = ({ inboxName, onBack, activeFilter, onFilterChange,
               document.body
             )}
         </span>
-        {(view.type === 'custom' || activeRole === 'Admin') ? (
+        {(view.type === 'custom'
+          ? activeRole === 'Admin' || !teamFavouriteIds.includes(view.id)
+          // Predefined (system) views have nothing an Agent can do from
+          // here — only Admin gets the kebab, and only to pin/unpin it as
+          // a Team Favourite.
+          : activeRole === 'Admin'
+        ) ? (
           <div className="view-kebab-wrap">
             <span className="view-row-count-under">{view.count}</span>
             <button
@@ -336,7 +344,31 @@ const AllViewsPanelOption3 = ({ inboxName, onBack, activeFilter, onFilterChange,
 
         <div className="view-list-divider" />
 
-        <div className="section-title margin-top">Team Favourites</div>
+        <div className="section-title margin-top section-title-with-info">
+          <span>Team Favourites</span>
+          <span
+            className="team-fav-info-icon"
+            onMouseEnter={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setTeamFavInfoPosition({ top: rect.top - 6, left: rect.left + rect.width / 2 });
+              setTeamFavInfoTooltip(true);
+            }}
+            onMouseLeave={() => setTeamFavInfoTooltip(false)}
+          >
+            <InfoIcon />
+          </span>
+          {teamFavInfoTooltip &&
+            createPortal(
+              <span
+                className="view-star-tooltip view-star-tooltip-multiline"
+                style={{ top: teamFavInfoPosition.top, left: teamFavInfoPosition.left }}
+              >
+                <span>Views marked as favourite</span>
+                <span>by your admin</span>
+              </span>,
+              document.body
+            )}
+        </div>
         <div className="nav-group view-list">
           {teamFavourites.length > 0 ? (
             teamFavourites.map((view) => renderPlainRow(view))

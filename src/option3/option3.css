@@ -17,3 +17,17 @@
 .drag-overlay-row .icon-default {
   opacity: 0 !important;
 }
+
+/* Info icon next to the "Team Favourites" section title. */
+.section-title-with-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.team-fav-info-icon {
+  display: inline-flex;
+  color: var(--slateIconsSubtle, #64758b);
+  cursor: default;
+}
+
