@@ -363,8 +363,17 @@ const AllViewsPanelOption3 = ({ inboxName, onBack, activeFilter, onFilterChange,
                 className="view-star-tooltip view-star-tooltip-multiline"
                 style={{ top: teamFavInfoPosition.top, left: teamFavInfoPosition.left }}
               >
-                <span>Views marked as favourite</span>
-                <span>by your admin</span>
+                {activeRole === 'Admin' ? (
+                  <>
+                    <span>Views marked as team favourite</span>
+                    <span>will show up here</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Views marked as favourite</span>
+                    <span>by your admin</span>
+                  </>
+                )}
               </span>,
               document.body
             )}
