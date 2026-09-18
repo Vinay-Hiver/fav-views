@@ -29,14 +29,16 @@ export const INITIAL_VIEWS_BY_INBOX = {
       { id: 'custom-9', name: 'Churn Risk', type: 'custom', icon: 'layers', count: 1 },
     ],
     favouriteIds: {
-      Admin: ['mine', 'unassigned', 'pending', 'closed'],
-      Agent: ['mine', 'unassigned', 'closed'],
+      Admin: ['mine', 'pending', 'closed'],
+      Agent: ['mine', 'closed'],
     },
+    // "Unassigned" is a default Team Favourite — it sits at the bottom of
+    // the merged order, below everyone's personal favourites.
     sidebarOrder: {
-      Admin: ['mine', 'unassigned', 'pending', 'closed'],
-      Agent: ['mine', 'unassigned', 'closed'],
+      Admin: ['mine', 'pending', 'closed', 'unassigned'],
+      Agent: ['mine', 'closed', 'unassigned'],
     },
-    teamFavouriteIds: [],
+    teamFavouriteIds: ['unassigned'],
   },
   Finance: {
     views: [

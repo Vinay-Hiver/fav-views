@@ -88,16 +88,33 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
     const nextTeamFavouriteIds = isTeamFavourited
       ? teamFavouriteIds.filter((favId) => favId !== id)
       : [...teamFavouriteIds, id];
+    const nextFavouriteIdsByRole = { ...favouriteIdsByRole };
     const nextSidebarOrder = { ...sidebarOrderByRole };
     ['Admin', 'Agent'].forEach((role) => {
       const roleOrder = sidebarOrderByRole[role] || favouriteIdsByRole[role] || [];
-      nextSidebarOrder[role] = isTeamFavourited
-        ? roleOrder.filter((favId) => favId !== id)
-        : roleOrder.includes(id) ? roleOrder : [...roleOrder, id];
+      if (isTeamFavourited) {
+        // Removing it as a Team Favourite — the reverse of the personal ->
+        // team conversion above. Anyone who currently has it in their
+        // sidebar (because it was a Team Favourite) keeps it there; it
+        // just converts into their own personal favourite instead of
+        // disappearing, as long as they're under their personal cap.
+        const roleFavs = favouriteIdsByRole[role] || [];
+        nextFavouriteIdsByRole[role] = roleFavs.includes(id) || roleFavs.length >= MAX_FAVOURITES
+          ? roleFavs
+          : [...roleFavs, id];
+        nextSidebarOrder[role] = roleOrder;
+      } else {
+        // Newly a Team Favourite — it always lands at the bottom of the
+        // sidebar. If it was already someone's personal favourite, that
+        // star is now redundant (it's pinned for everyone anyway), so it
+        // simply converts into a Team Favourite instead of double-counting.
+        nextFavouriteIdsByRole[role] = (favouriteIdsByRole[role] || []).filter((favId) => favId !== id);
+        nextSidebarOrder[role] = [...roleOrder.filter((favId) => favId !== id), id];
+      }
     });
     onChange({
       views,
-      favouriteIds: favouriteIdsByRole,
+      favouriteIds: nextFavouriteIdsByRole,
       sidebarOrder: nextSidebarOrder,
       teamFavouriteIds: nextTeamFavouriteIds,
     });
