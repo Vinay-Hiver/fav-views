@@ -1,7 +1,7 @@
 import React from 'react';
 import AllViewsPanel from './AllViewsPanel';
 import { ViewTypeIcon, TeamFavRowIcon } from './viewIcons';
-import { INITIAL_VIEWS_BY_INBOX, MAX_FAVOURITES } from '../data/dummyViews';
+import { INITIAL_VIEWS_BY_INBOX } from '../data/dummyViews';
 
 // Icons
 import allMailIcon from '../assets/icons/all-mail.svg';
@@ -112,12 +112,12 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
     const viewsById = {};
     views.forEach((v) => { viewsById[v.id] = v; });
 
-    // What shows in the sidebar isn't "your favourites" anymore — it's the
-    // first 5 entries of the merged, drag-reorderable order (personal
-    // favourites and Team Favourites interleaved, as arranged in All
-    // Views). An Agent can't remove a Team Favourite, so with zero personal
-    // favourites the sidebar simply shows the top 5 Team Favourites.
-    const sidebarViews = sidebarOrder.map((id) => viewsById[id]).filter(Boolean).slice(0, MAX_FAVOURITES);
+    // Everything favourited shows in the sidebar now — up to 5 personal
+    // favourites and up to 5 Team Favourites, merged into one
+    // drag-reorderable order (arranged from All Views), so as many as 10
+    // views can appear here. An Agent can't remove a Team Favourite, but
+    // can freely reorder the merged list, personal and team entries alike.
+    const sidebarViews = sidebarOrder.map((id) => viewsById[id]).filter(Boolean);
 
     return (
       <div className="nav-group-nested">

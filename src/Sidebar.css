@@ -250,6 +250,18 @@
   padding-top: 12px;
 }
 
+.section-title-with-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-title-info-icon {
+  display: inline-flex;
+  color: var(--slateIconsSubtle);
+  cursor: default;
+}
+
 .nav-group {
   display: flex;
   flex-direction: column;
@@ -503,6 +515,23 @@
 
 .icon-drag-handle:active {
   cursor: grabbing;
+}
+
+/* The floating clone @dnd-kit renders under the cursor while dragging. */
+.drag-overlay-row {
+  width: 224px; /* matches the All Views panel's content width */
+  background-color: var(--slateSurfaceWhite, #ffffff);
+  border-radius: 6px;
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.16), 0 2px 4px rgba(15, 23, 42, 0.08);
+  cursor: grabbing;
+}
+
+.drag-overlay-row .icon-drag-handle {
+  opacity: 1 !important;
+}
+
+.drag-overlay-row .icon-default {
+  opacity: 0 !important;
 }
 
 .draggable-row:hover .icon-default {

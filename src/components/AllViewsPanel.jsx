@@ -1,27 +1,28 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { MAX_FAVOURITES } from '../data/dummyViews';
 import {
   BackIcon, SearchIcon, StarIcon, DragHandleIcon, ViewTypeIcon, KebabIcon,
-  UsersStarIcon, RenameIcon, PencilIcon, TrashIcon, HeartCircleIcon, TeamFavRowIcon,
+  UsersStarIcon, RenameIcon, PencilIcon, TrashIcon, TeamFavRowIcon, InfoIcon,
 } from './viewIcons';
-
-// 1x1 transparent image used to suppress the browser's native drag ghost.
-const EMPTY_DRAG_IMAGE = typeof Image !== 'undefined' ? new Image() : null;
-if (EMPTY_DRAG_IMAGE) {
-  EMPTY_DRAG_IMAGE.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7';
-}
 
 // `viewsData` = { views: [...], favouriteIds: [...] } for the current inbox.
 // This component is fully controlled — all favourite/reorder changes are
 // reported up via onChange so the home nav (favourite views) stays in sync.
+// Drag-and-drop reordering is powered by @dnd-kit — same library used by the
+// earlier option prototypes.
 const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsData, onChange, activeRole }) => {
   const [search, setSearch] = React.useState('');
-  const [draggedId, setDraggedId] = React.useState(null);
   const [menuOpenFor, setMenuOpenFor] = React.useState(null);
   const [menuPosition, setMenuPosition] = React.useState({ top: 0, left: 0 });
   const [starTooltipFor, setStarTooltipFor] = React.useState(null);
   const [starTooltipPosition, setStarTooltipPosition] = React.useState({ top: 0, left: 0 });
+  const [favInfoTooltip, setFavInfoTooltip] = React.useState(false);
+  const [favInfoPosition, setFavInfoPosition] = React.useState({ top: 0, left: 0 });
+  const [activeDragId, setActiveDragId] = React.useState(null);
 
   const views = viewsData?.views || [];
   // Admin and Agent each have their own personal Favourites for this inbox.
@@ -52,37 +53,9 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
     return map;
   }, [views]);
 
-  // FLIP: whenever the favourites order changes, slide rows from their old
-  // position to their new one instead of letting them jump — the "other
-  // cards move out of the way" feel of a basic reorderable list.
-  const rowRefs = React.useRef({});
-  const prevRectsRef = React.useRef({});
-  React.useLayoutEffect(() => {
-    const nextRects = {};
-    sidebarOrder.forEach((id) => {
-      const el = rowRefs.current[id];
-      if (el) nextRects[id] = el.getBoundingClientRect();
-    });
-    sidebarOrder.forEach((id) => {
-      const prev = prevRectsRef.current[id];
-      const next = nextRects[id];
-      const el = rowRefs.current[id];
-      if (!prev || !next || !el) return;
-      const deltaY = prev.top - next.top;
-      if (deltaY) {
-        el.style.transition = 'none';
-        el.style.transform = `translateY(${deltaY}px)`;
-        // Force layout so the browser commits the offset above before we
-        // flip the transition back on — otherwise it can coalesce both
-        // style writes into one frame and the move never animates.
-        // eslint-disable-next-line no-unused-expressions
-        el.offsetHeight;
-        el.style.transition = 'transform 220ms ease';
-        el.style.transform = '';
-      }
-    });
-    prevRectsRef.current = nextRects;
-  }, [sidebarOrder.join('|')]);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
+  );
 
   if (!viewsData) return null;
 
@@ -131,20 +104,16 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
     setMenuOpenFor(null);
   };
 
-  // Live-reorders while dragging over another row (personal favourite or
-  // Team Favourite, mixed freely) — dropping the dragged card before/after
-  // the hovered row so the other rows slide out of the way as you move.
-  const reorderOverRow = (draggedViewId, targetViewId, placeAfter) => {
-    if (draggedViewId === targetViewId) return;
-    const fromIndex = sidebarOrder.indexOf(draggedViewId);
-    let toIndex = sidebarOrder.indexOf(targetViewId);
+  const handleDragStart = (event) => setActiveDragId(event.active.id);
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    setActiveDragId(null);
+    if (!over || active.id === over.id) return;
+    const fromIndex = sidebarOrder.indexOf(active.id);
+    const toIndex = sidebarOrder.indexOf(over.id);
     if (fromIndex === -1 || toIndex === -1) return;
-    if (placeAfter) toIndex += 1;
-    if (fromIndex < toIndex) toIndex -= 1;
-    if (fromIndex === toIndex) return;
-    const next = [...sidebarOrder];
-    next.splice(fromIndex, 1);
-    next.splice(toIndex, 0, draggedViewId);
+    const next = arrayMove(sidebarOrder, fromIndex, toIndex);
     onChange({
       views,
       favouriteIds: favouriteIdsByRole,
@@ -156,7 +125,7 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
   const query = search.toLowerCase();
   // One merged, drag-reorderable list — personal favourites and Team
   // Favourites interleaved freely in whatever order the user's arranged
-  // them. Its first 5 entries are what shows in the home nav.
+  // them. All of it shows in the home nav (up to 5 personal + 5 team = 10).
   const mergedFavourites = sidebarOrder
     .map((id) => viewsById[id])
     .filter((v) => v && v.name.toLowerCase().includes(query));
@@ -166,8 +135,6 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
 
   const isSelected = (view) =>
     activeFilter?.inbox === inboxName && activeFilter?.type === view.name;
-
-  const canDrag = search.trim() === '';
 
   // A view that's a Team Favourite swaps its row icon to the users-plus
   // glyph too, on top of the separate circle-heart indicator next to the
@@ -181,43 +148,16 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
     return 'Add to favorites';
   };
 
-  const renderRow = (view, { draggable = false } = {}) => (
-    <div
-      className={`view-row ${isSelected(view) ? 'selected' : ''} ${draggable ? 'draggable-row' : ''} ${draggedId === view.id ? 'is-dragging' : ''}`}
-      key={view.id}
-      ref={draggable ? (el) => { rowRefs.current[view.id] = el; } : undefined}
-      onClick={() => onFilterChange?.({ inbox: inboxName, type: view.name })}
-      onDragOver={(e) => {
-        if (!draggable || !canDrag || !draggedId || draggedId === view.id) return;
-        e.preventDefault();
-        const rect = e.currentTarget.getBoundingClientRect();
-        const placeAfter = e.clientY > rect.top + rect.height / 2;
-        reorderOverRow(draggedId, view.id, placeAfter);
-      }}
-      onDrop={(e) => {
-        if (!draggable) return;
-        e.preventDefault();
-        setDraggedId(null);
-      }}
-    >
+  // Shared row body (icon, name, star/team-fav, kebab) — used by both the
+  // draggable Favourites rows and the plain All Views rows.
+  const renderRowBody = (view, { dragHandleProps } = {}) => (
+    <>
       <div className="view-row-main">
         <span className="view-row-icon">
-          {draggable ? (
+          {dragHandleProps ? (
             <>
               <span className="icon-default">{rowIcon(view)}</span>
-              <span
-                className="icon-drag-handle"
-                draggable={canDrag}
-                onDragStart={(e) => {
-                  if (!canDrag) return;
-                  e.stopPropagation();
-                  // Suppress the native ghost preview entirely — reordering
-                  // is shown purely by the rows sliding into place.
-                  e.dataTransfer.setDragImage(EMPTY_DRAG_IMAGE, 0, 0);
-                  setDraggedId(view.id);
-                }}
-                onDragEnd={() => setDraggedId(null)}
-              >
+              <span className="icon-drag-handle" {...dragHandleProps}>
                 <DragHandleIcon />
               </span>
             </>
@@ -242,7 +182,7 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
             }}
             onMouseLeave={() => setStarTooltipFor(null)}
           >
-            <HeartCircleIcon />
+            <StarIcon filled />
             {starTooltipFor === view.id &&
               createPortal(
                 <span
@@ -278,6 +218,7 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
               onClick={(e) => {
                 e.stopPropagation();
                 toggleFavourite(view.id);
+                setStarTooltipFor(null);
               }}
               aria-label={favouriteIds.includes(view.id) ? 'Remove from favourites' : 'Add to favourites'}
             >
@@ -295,13 +236,7 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
               )}
           </span>
         )}
-        {(view.type === 'custom'
-          ? activeRole === 'Admin' || !teamFavouriteIds.includes(view.id)
-          // Predefined (system) views have nothing an Agent can do from
-          // here — only Admin gets the kebab, and only to pin/unpin it as
-          // a Team Favourite. No Rename/Edit/Delete for these.
-          : activeRole === 'Admin'
-        ) ? (
+        {view.type === 'custom' && (activeRole === 'Admin' || !teamFavouriteIds.includes(view.id)) ? (
           <div className="view-kebab-wrap">
             <span className="view-row-count-under">{view.count}</span>
             <button
@@ -382,6 +317,16 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
           <span className="view-row-count">{view.count}</span>
         )}
       </div>
+    </>
+  );
+
+  const renderPlainRow = (view) => (
+    <div
+      className={`view-row ${isSelected(view) ? 'selected' : ''}`}
+      key={view.id}
+      onClick={() => onFilterChange?.({ inbox: inboxName, type: view.name })}
+    >
+      {renderRowBody(view)}
     </div>
   );
 
@@ -410,22 +355,92 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
           </div>
         </div>
 
-        <div className="section-title margin-top">My Favorites</div>
-        <div className="nav-group view-list">
-          {mergedFavourites.length > 0 ? (
-            mergedFavourites.map((view) => renderRow(view, { draggable: true }))
-          ) : (
-            <div className="view-list-empty">There are no favourite views.</div>
-          )}
+        <div className="section-title margin-top section-title-with-info">
+          <span>My Favorites</span>
+          <span
+            className="section-title-info-icon"
+            onMouseEnter={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setFavInfoPosition({ top: rect.top - 6, left: rect.left + rect.width / 2 });
+              setFavInfoTooltip(true);
+            }}
+            onMouseLeave={() => setFavInfoTooltip(false)}
+          >
+            <InfoIcon />
+          </span>
+          {favInfoTooltip &&
+            createPortal(
+              <span
+                className="view-star-tooltip view-star-tooltip-multiline"
+                style={{ top: favInfoPosition.top, left: favInfoPosition.left }}
+              >
+                <span>These views will appear</span>
+                <span>on your sidebar</span>
+              </span>,
+              document.body
+            )}
         </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={sidebarOrder} strategy={verticalListSortingStrategy}>
+            <div className="nav-group view-list">
+              {mergedFavourites.length > 0 ? (
+                mergedFavourites.map((view) => (
+                  <SortableRow key={view.id} view={view} isSelected={isSelected(view)} onSelect={() => onFilterChange?.({ inbox: inboxName, type: view.name })} renderRowBody={renderRowBody} />
+                ))
+              ) : (
+                <div className="view-list-empty">There are no favourite views.</div>
+              )}
+            </div>
+          </SortableContext>
+          {createPortal(
+            <DragOverlay dropAnimation={{ duration: 180, easing: 'ease' }}>
+              {activeDragId && viewsById[activeDragId] ? (
+                <div className="view-row draggable-row drag-overlay-row">
+                  {renderRowBody(viewsById[activeDragId])}
+                </div>
+              ) : null}
+            </DragOverlay>,
+            document.body
+          )}
+        </DndContext>
 
         <div className="view-list-divider" />
 
         <div className="section-title margin-top">All Views</div>
         <div className="nav-group view-list">
-          {others.map((view) => renderRow(view))}
+          {others.map((view) => renderPlainRow(view))}
         </div>
       </div>
+    </div>
+  );
+};
+
+// One draggable row within My Favorites — the drag handle (six dots, shown
+// on hover in place of the row's normal icon) is the only element the
+// pointer/keyboard listeners attach to, so clicking the rest of the row
+// still just selects the view.
+const SortableRow = ({ view, isSelected, onSelect, renderRowBody }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: view.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`view-row draggable-row ${isSelected ? 'selected' : ''} ${isDragging ? 'is-dragging' : ''}`}
+      onClick={onSelect}
+    >
+      {renderRowBody(view, { dragHandleProps: { ...attributes, ...listeners } })}
     </div>
   );
 };

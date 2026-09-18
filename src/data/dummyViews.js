@@ -7,7 +7,8 @@
 // `sidebarOrder` (also keyed by role) is the single merged, drag-reorderable
 // order of every id currently in favouriteIds[role] or teamFavouriteIds —
 // personal and Team Favourites can be freely reordered against each other
-// in this one list. The first 5 entries are what shows in the home nav.
+// in this one list. All of it shows in the home nav — up to 5 personal
+// favourites plus up to 5 Team Favourites, so as many as 10 views.
 export const INITIAL_VIEWS_BY_INBOX = {
   Support: {
     views: [
