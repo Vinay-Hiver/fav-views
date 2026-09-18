@@ -6,7 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { MAX_FAVOURITES } from '../data/dummyViews';
 import {
   BackIcon, SearchIcon, StarIcon, DragHandleIcon, ViewTypeIcon, KebabIcon,
-  UsersStarIcon, RenameIcon, PencilIcon, TrashIcon, TeamFavRowIcon, InfoIcon,
+  UsersStarIcon, RenameIcon, PencilIcon, TrashIcon, InfoIcon,
 } from './viewIcons';
 
 // `viewsData` = { views: [...], favouriteIds: [...] } for the current inbox.
@@ -153,11 +153,9 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
   const isSelected = (view) =>
     activeFilter?.inbox === inboxName && activeFilter?.type === view.name;
 
-  // A view that's a Team Favourite swaps its row icon to the users-plus
-  // glyph too, on top of the separate circle-heart indicator next to the
-  // star/kebab.
-  const rowIcon = (view) =>
-    teamFavouriteIds.includes(view.id) ? <TeamFavRowIcon /> : <ViewTypeIcon icon={view.icon} />;
+  // A Team Favourite keeps its own view-type icon — the star badge next to
+  // the kebab is what signals team-favourite status, not the row icon.
+  const rowIcon = (view) => <ViewTypeIcon icon={view.icon} />;
 
   const starTooltip = (view) => {
     if (favouriteIds.includes(view.id)) return 'Remove from favorites';
@@ -190,7 +188,7 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
           // starred/unstarred by an Agent, so no star toggle here at all —
           // just the indicator marking it as team-pinned.
           <span
-            className={`view-team-fav-indicator ${activeRole === 'Agent' ? 'agent-variant' : ''}`}
+            className="view-team-fav-indicator agent-variant"
             aria-label="Team favourite"
             onMouseEnter={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
@@ -208,8 +206,8 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
                 >
                   {activeRole === 'Agent' ? (
                     <>
-                      <span>View marked as team favorite</span>
-                      <span>by your admin</span>
+                      <span>View favourited by your admin.</span>
+                      <span>Only they can remove it.</span>
                     </>
                   ) : (
                     'Marked as team favorite'
@@ -253,7 +251,13 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
               )}
           </span>
         )}
-        {view.type === 'custom' && (activeRole === 'Admin' || !teamFavouriteIds.includes(view.id)) ? (
+        {view.id !== 'mine' && (view.type === 'custom'
+          ? activeRole === 'Admin' || !teamFavouriteIds.includes(view.id)
+          // Predefined (system) views other than "Mine" can still be
+          // marked a Team Favourite — but the only thing they offer is
+          // that toggle, and only to the Admin (no Rename/Edit/Delete).
+          : activeRole === 'Admin'
+        ) ? (
           <div className="view-kebab-wrap">
             <span className="view-row-count-under">{view.count}</span>
             <button

@@ -1,6 +1,6 @@
 import React from 'react';
 import AllViewsPanel from './AllViewsPanel';
-import { ViewTypeIcon, TeamFavRowIcon } from './viewIcons';
+import { ViewTypeIcon } from './viewIcons';
 import { INITIAL_VIEWS_BY_INBOX } from '../data/dummyViews';
 
 // Icons
@@ -107,7 +107,7 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
   };
 
   const renderNestedItems = (inboxName) => {
-    const { views, sidebarOrder: sidebarOrderByRole, favouriteIds: favouriteIdsByRole, teamFavouriteIds } = viewsByInbox[inboxName];
+    const { views, sidebarOrder: sidebarOrderByRole, favouriteIds: favouriteIdsByRole } = viewsByInbox[inboxName];
     const sidebarOrder = sidebarOrderByRole[activeRole] || favouriteIdsByRole[activeRole] || [];
     const viewsById = {};
     views.forEach((v) => { viewsById[v.id] = v; });
@@ -129,7 +129,7 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
           >
             <div className="nav-content">
               <span className="item-icon">
-                {teamFavouriteIds.includes(view.id) ? <TeamFavRowIcon /> : <ViewTypeIcon icon={view.icon} />}
+                <ViewTypeIcon icon={view.icon} />
               </span>
               <span>{view.name}</span>
             </div>

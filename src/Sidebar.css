@@ -605,11 +605,12 @@
   cursor: default;
 }
 
-/* For an Agent, the icon reads as a lower-emphasis slate glyph instead of
-   the Admin's gold — always full opacity, just a subtler colour at rest
-   that darkens on hover (which is also when the tooltip explaining it
-   appears). StarIcon hardcodes its own fill/stroke when filled, so these
-   need to target the SVG directly rather than just setting `color`. */
+/* Team Favourite indicator reads as a lower-emphasis slate glyph rather
+   than the personal-favourite gold, for both Admin and Agent — always
+   full opacity, just a subtler colour at rest that darkens on hover
+   (which is also when the tooltip explaining it appears). StarIcon
+   hardcodes its own fill/stroke when filled, so these need to target the
+   SVG directly rather than just setting `color`. */
 .view-team-fav-indicator.agent-variant svg {
   fill: var(--slateSurfaceSubtle300);
   stroke: var(--slateSurfaceSubtle300);
