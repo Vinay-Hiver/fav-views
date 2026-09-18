@@ -59,6 +59,22 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
 
   if (!viewsData) return null;
 
+  // Default insertion point for a newly personal-favourited view: right
+  // before the first Team Favourite in the order, so personal favourites
+  // stay grouped above Team Favourites by default (bumping any Team
+  // Favourites down a slot) — without disturbing anyone's own manual
+  // drag-reorder among either group. Only used for *new* entries; once
+  // something's in the list, dragging it anywhere is entirely up to
+  // whoever owns that sidebar.
+  const insertBeforePersonalTeamBoundary = (order, id, teamIds) => {
+    const withoutId = order.filter((favId) => favId !== id);
+    const firstTeamIndex = withoutId.findIndex((favId) => teamIds.includes(favId));
+    if (firstTeamIndex === -1) return [...withoutId, id];
+    const next = [...withoutId];
+    next.splice(firstTeamIndex, 0, id);
+    return next;
+  };
+
   const toggleFavourite = (id) => {
     const isFavourited = favouriteIds.includes(id);
     // At the cap, clicking an unfavourited star is a no-op — the hover
@@ -69,7 +85,7 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
       : [...favouriteIds, id];
     const nextOrder = isFavourited
       ? sidebarOrder.filter((favId) => favId !== id)
-      : sidebarOrder.includes(id) ? sidebarOrder : [...sidebarOrder, id];
+      : sidebarOrder.includes(id) ? sidebarOrder : insertBeforePersonalTeamBoundary(sidebarOrder, id, teamFavouriteIds);
     onChange({
       views,
       favouriteIds: { ...favouriteIdsByRole, [activeRole]: nextFavouriteIds },
@@ -99,10 +115,14 @@ const AllViewsPanel = ({ inboxName, onBack, activeFilter, onFilterChange, viewsD
         // just converts into their own personal favourite instead of
         // disappearing, as long as they're under their personal cap.
         const roleFavs = favouriteIdsByRole[role] || [];
-        nextFavouriteIdsByRole[role] = roleFavs.includes(id) || roleFavs.length >= MAX_FAVOURITES
-          ? roleFavs
-          : [...roleFavs, id];
-        nextSidebarOrder[role] = roleOrder;
+        const convertsToPersonal = !roleFavs.includes(id) && roleFavs.length < MAX_FAVOURITES;
+        nextFavouriteIdsByRole[role] = convertsToPersonal ? [...roleFavs, id] : roleFavs;
+        // If it converted into a personal favourite, it moves up to sit
+        // with the other personal favourites instead of staying down in
+        // the Team Favourites block it's leaving.
+        nextSidebarOrder[role] = convertsToPersonal
+          ? insertBeforePersonalTeamBoundary(roleOrder, id, nextTeamFavouriteIds)
+          : roleOrder;
       } else {
         // Newly a Team Favourite — it always lands at the bottom of the
         // sidebar. If it was already someone's personal favourite, that
